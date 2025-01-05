@@ -23,6 +23,7 @@ func TestYaml(t *testing.T) {
 		{"flat", "float.json", "1.24", float64(1.24)},
 		{"boolean", "bool.json", "true", true},
 		{"object", "object.json", `{"key": "value"}`, map[string]any{"key": "value"}},
+		{"mobject", "mobject.json", `key: value`, map[string]any{"key": "value"}},
 		{"array", "array.json", `["one", "two", "three"]`, []any{"one", "two", "three"}},
 		{"marray", "marray.json", "- one\r\n- two\r\n- three", []any{"one", "two", "three"}},
 	}
