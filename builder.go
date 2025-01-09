@@ -20,11 +20,15 @@ func (b *Builder) With(provider Provider) *Builder {
 }
 
 func (b *Builder) Build() (any, error) {
-	var result any = map[string]any{}
+	var result any = nil
 	for _, provider := range b.providers {
 		cfg, err := provider.Get()
 		if err != nil {
 			return nil, err
+		}
+		if result == nil {
+			result = cfg
+			continue
 		}
 		result, err = merge(cfg, result)
 		if err != nil {
