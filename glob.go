@@ -56,8 +56,7 @@ func glob(dir string, pattern string) ([]string, error) {
 		if d == nil || d.IsDir() || err != nil {
 			return nil
 		}
-		name := filepath.Base(path)
-		if r.MatchString(name) {
+		if r.MatchString(path) {
 			files = append(files, path)
 		}
 		return nil

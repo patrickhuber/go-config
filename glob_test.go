@@ -43,7 +43,7 @@ func TestGlob(t *testing.T) {
 				"json": "test",
 				"toml": "test",
 			},
-			glob: "config.*",
+			glob: "**/config.*",
 		},
 		{
 			name: "level",

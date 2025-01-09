@@ -45,7 +45,7 @@ func TestGlobUp(t *testing.T) {
 				"json": "test",
 				"toml": "test",
 			},
-			glob: "config.*",
+			glob: "**/config.*",
 		},
 		{
 			dir:  "./child/grand",

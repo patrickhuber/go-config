@@ -68,8 +68,8 @@ func globUp(dir string, pattern string) ([]string, error) {
 				continue
 			}
 			name := entry.Name()
-			if r.MatchString(name) {
-				path := filepath.Join(current, name)
+			path := filepath.Join(current, name)
+			if r.MatchString(path) {
 				files = append(files, path)
 			}
 		}
