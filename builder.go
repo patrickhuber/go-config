@@ -1,6 +1,9 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"reflect"
+)
 
 type Builder struct {
 	providers []Provider
@@ -39,15 +42,19 @@ func (b *Builder) Build() (any, error) {
 }
 
 func merge(source any, target any) (any, error) {
-	sourceMap, ok := source.(map[string]any)
-	if ok {
-		targetMap, ok := target.(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("source is a %T and target is a %T", source, target)
-		}
-		for k, v := range sourceMap {
+	// check if the types are equal, error if not
+	if reflect.TypeOf(source) != reflect.TypeOf(target) {
+		return nil, fmt.Errorf("%T expected to be equal to %T", source, target)
+	}
+
+	switch src := source.(type) {
+	case map[string]any:
+		// we have a type guard above
+		targetMap := target.(map[string]any)
+		for k, v := range src {
 			targetMap[k] = v
 		}
+		return targetMap, nil
 	}
-	return target, nil
+	return nil, fmt.Errorf("unable to merge type %T", source)
 }

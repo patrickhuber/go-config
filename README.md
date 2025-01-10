@@ -2,10 +2,32 @@
 
 configuration library in go
 
-# Usage
+# Get it
 
 ```bash
 go get github.com/patrickhuber/go-config
+```
+
+# Example
+
+> config.yml
+```
+yaml: yes
+```
+
+> config.json
+```
+json: yes
+```
+
+> config.toml
+```
+toml="yes"
+```
+
+> .env
+```
+EXAMPLE_ENV="yes"
 ```
 
 ```go
@@ -34,4 +56,9 @@ func main(){
         fmt.Println("%v", cfg)
     }
 }
+```
+
+> output
+```
+
 ```
