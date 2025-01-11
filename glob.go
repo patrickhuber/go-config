@@ -72,6 +72,25 @@ func (g *GlobProvider) Get() (any, error) {
 	}
 	return NewBuilder(providers...).Build()
 }
+
+func glob(dir string, pattern string) ([]string, error) {
+	var files []string
+
+	pat := toRegexp(pattern)
+	r := regexp.MustCompile(pat)
+
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if d == nil || d.IsDir() || err != nil {
+			return nil
+		}
+		if r.MatchString(path) {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, err
+}
+
 func globUp(dir string, pattern string) ([]string, error) {
 	var files []string
 	current := filepath.Clean(dir)
@@ -101,23 +120,6 @@ func globUp(dir string, pattern string) ([]string, error) {
 		current = dir
 	}
 	return files, nil
-}
-func glob(dir string, pattern string) ([]string, error) {
-	var files []string
-
-	pat := toRegexp(pattern)
-	r := regexp.MustCompile(pat)
-
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if d == nil || d.IsDir() || err != nil {
-			return nil
-		}
-		if r.MatchString(path) {
-			files = append(files, path)
-		}
-		return nil
-	})
-	return files, err
 }
 
 var replaces = regexp.MustCompile(`(\.)|(\*\*\/)|(\*)|([^\/\*]+)|(\/)`)
