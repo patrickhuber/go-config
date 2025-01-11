@@ -1,25 +1,52 @@
 package config
 
 import (
+	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 func NewGlob(directory string, pattern string) *GlobProvider {
 	return &GlobProvider{
+		direction: globDirectionDown,
 		pattern:   pattern,
 		directory: directory,
 	}
 }
 
+func NewGlobUp(directory string, pattern string) *GlobProvider {
+	return &GlobProvider{
+		direction: globDirectionUp,
+		pattern:   pattern,
+		directory: directory,
+	}
+}
+
+type globDirection string
+
+const globDirectionUp globDirection = "up"
+const globDirectionDown globDirection = "down"
+
 type GlobProvider struct {
 	pattern   string
 	directory string
+	direction globDirection
 }
 
 func (g *GlobProvider) Get() (any, error) {
-	matches, err := glob(g.directory, g.pattern)
+	var matches []string
+	var err error
+	switch g.direction {
+	case globDirectionDown:
+		matches, err = glob(g.directory, g.pattern)
+	case globDirectionUp:
+		matches, err = globUp(g.directory, g.pattern)
+	default:
+		err = fmt.Errorf("unknow direction")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +72,36 @@ func (g *GlobProvider) Get() (any, error) {
 	}
 	return NewBuilder(providers...).Build()
 }
+func globUp(dir string, pattern string) ([]string, error) {
+	var files []string
+	current := filepath.Clean(dir)
 
+	pat := toRegexp(pattern)
+	r := regexp.MustCompile(pat)
+
+	for {
+		dir := filepath.Dir(current)
+		if strings.Compare(current, dir) == 0 {
+			break
+		}
+		entries, err := os.ReadDir(current)
+		if err != nil {
+			return nil, err
+		}
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			name := entry.Name()
+			path := filepath.Join(current, name)
+			if r.MatchString(path) {
+				files = append(files, path)
+			}
+		}
+		current = dir
+	}
+	return files, nil
+}
 func glob(dir string, pattern string) ([]string, error) {
 	var files []string
 
