@@ -27,7 +27,7 @@ toml="yes"
 
 > .env
 ```
-EXAMPLE_ENV="yes"
+dotenv="yes"
 ```
 
 ```go
@@ -38,11 +38,13 @@ import (
 )
 func main(){
     args := []string{"--hello", "world"}
+    os.SetEnv("env", "yes")
     builder := config.NewBuilder(
         config.NewYaml("config.yml"),
         config.NewJson("config.json"),
         config.NewToml("config.toml"),
-        config.NewEnv("EXAMPLE_"),
+        config.NewEnv("env"),
+        config.NewDotEnv(".env"),
         config.NewFlag([]config.Flag{
             config.StringFlag{
                 Name: "hello",
@@ -60,5 +62,9 @@ func main(){
 
 > output
 ```
-
+yaml: yes
+json: yes
+toml: yes
+dotenv: yes
+env: yes
 ```
