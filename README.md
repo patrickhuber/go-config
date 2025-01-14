@@ -11,17 +11,17 @@ go get github.com/patrickhuber/go-config
 # Example
 
 > config.yml
-```
+```yaml
 yaml: yes
 ```
 
 > config.json
-```
+```json
 json: yes
 ```
 
 > config.toml
-```
+```toml
 toml="yes"
 ```
 
