@@ -62,6 +62,8 @@ func (g *GlobProvider) Get() (any, error) {
 			provider = NewYaml(match)
 		case ".toml":
 			provider = NewToml(match)
+		case ".env":
+			provider = NewDotEnv(match)
 		default:
 			continue
 		}
