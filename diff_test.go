@@ -183,23 +183,41 @@ func TestDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "slice_reverse",
-			from: []any{"hello", "new", "world"},
-			to:   []any{"world", "new", "hello"},
+			name: "new_slice",
+			from: []any{"hello", "world"},
+			to:   []any{"new", "elements"},
 			expected: []config.Change{
 				{
 					Path:       []string{"0"},
-					ChangeType: config.Update,
+					ChangeType: config.Delete,
 					From:       "hello",
-					To:         "world",
+					To:         nil,
 				},
 				{
-					Path:       []string{"2"},
-					ChangeType: config.Update,
+					Path:       []string{"1"},
+					ChangeType: config.Delete,
 					From:       "world",
-					To:         "hello",
+					To:         nil,
+				},
+				{
+					Path:       []string{"0"},
+					ChangeType: config.Create,
+					From:       nil,
+					To:         "new",
+				},
+				{
+					Path:       []string{"1"},
+					ChangeType: config.Create,
+					From:       nil,
+					To:         "elements",
 				},
 			},
+		},
+		{
+			name:     "slice_reverse",
+			from:     []any{"hello", "new", "world"},
+			to:       []any{"world", "new", "hello"},
+			expected: nil,
 		},
 	}
 	for _, test := range tests {

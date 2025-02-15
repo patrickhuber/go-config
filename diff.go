@@ -138,21 +138,6 @@ func sliceDiff(fromSlice []any, to any, path []string) ([]Change, error) {
 
 	var changes []Change
 
-	fromMap := createReverseLookup(fromSlice)
-	for toIndex, toValue := range toSlice {
-		// was the toValue added?
-		_, ok := fromMap[toValue]
-		if ok {
-			continue
-		}
-		changes = append(changes, Change{
-			ChangeType: Create,
-			Path:       append(path, strconv.Itoa(toIndex)),
-			From:       nil,
-			To:         toValue,
-		})
-	}
-
 	toMap := createReverseLookup(toSlice)
 	for fromIndex, fromValue := range fromSlice {
 		// was the fromValue removed?
@@ -165,6 +150,21 @@ func sliceDiff(fromSlice []any, to any, path []string) ([]Change, error) {
 			Path:       append(path, strconv.Itoa(fromIndex)),
 			From:       fromValue,
 			To:         nil,
+		})
+	}
+
+	fromMap := createReverseLookup(fromSlice)
+	for toIndex, toValue := range toSlice {
+		// was the toValue added?
+		_, ok := fromMap[toValue]
+		if ok {
+			continue
+		}
+		changes = append(changes, Change{
+			ChangeType: Create,
+			Path:       append(path, strconv.Itoa(toIndex)),
+			From:       nil,
+			To:         toValue,
 		})
 	}
 
