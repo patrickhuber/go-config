@@ -124,8 +124,14 @@ func TestDiff(t *testing.T) {
 			expected: []config.Change{
 				{
 					Path:       []string{"0"},
-					ChangeType: config.Delete,
+					ChangeType: config.Update,
 					From:       "hello",
+					To:         "world",
+				},
+				{
+					Path:       []string{"1"},
+					ChangeType: config.Delete,
+					From:       "world",
 					To:         nil,
 				},
 			},
@@ -137,9 +143,15 @@ func TestDiff(t *testing.T) {
 			expected: []config.Change{
 				{
 					Path:       []string{"0"},
+					ChangeType: config.Update,
+					From:       "world",
+					To:         "hello",
+				},
+				{
+					Path:       []string{"1"},
 					ChangeType: config.Create,
 					From:       nil,
-					To:         "hello",
+					To:         "world",
 				},
 			},
 		},
@@ -163,9 +175,15 @@ func TestDiff(t *testing.T) {
 			expected: []config.Change{
 				{
 					Path:       []string{"1"},
+					ChangeType: config.Update,
+					From:       "world",
+					To:         "new",
+				},
+				{
+					Path:       []string{"2"},
 					ChangeType: config.Create,
 					From:       nil,
-					To:         "new",
+					To:         "world",
 				},
 			},
 		},
@@ -176,8 +194,14 @@ func TestDiff(t *testing.T) {
 			expected: []config.Change{
 				{
 					Path:       []string{"1"},
-					ChangeType: config.Delete,
+					ChangeType: config.Update,
 					From:       "new",
+					To:         "world",
+				},
+				{
+					Path:       []string{"2"},
+					ChangeType: config.Delete,
+					From:       "world",
 					To:         nil,
 				},
 			},
@@ -189,35 +213,36 @@ func TestDiff(t *testing.T) {
 			expected: []config.Change{
 				{
 					Path:       []string{"0"},
-					ChangeType: config.Delete,
+					ChangeType: config.Update,
 					From:       "hello",
-					To:         nil,
-				},
-				{
-					Path:       []string{"1"},
-					ChangeType: config.Delete,
-					From:       "world",
-					To:         nil,
-				},
-				{
-					Path:       []string{"0"},
-					ChangeType: config.Create,
-					From:       nil,
 					To:         "new",
 				},
 				{
 					Path:       []string{"1"},
-					ChangeType: config.Create,
-					From:       nil,
+					ChangeType: config.Update,
+					From:       "world",
 					To:         "elements",
 				},
 			},
 		},
 		{
-			name:     "slice_reverse",
-			from:     []any{"hello", "new", "world"},
-			to:       []any{"world", "new", "hello"},
-			expected: nil,
+			name: "slice_reverse",
+			from: []any{"hello", "new", "world"},
+			to:   []any{"world", "new", "hello"},
+			expected: []config.Change{
+				{
+					Path:       []string{"0"},
+					ChangeType: config.Update,
+					From:       "hello",
+					To:         "world",
+				},
+				{
+					Path:       []string{"2"},
+					ChangeType: config.Update,
+					From:       "world",
+					To:         "hello",
+				},
+			},
 		},
 	}
 	for _, test := range tests {
@@ -236,7 +261,7 @@ func TestDiff(t *testing.T) {
 
 func assertChangesEqual(expected, actual []config.Change) error {
 	if len(actual) != len(expected) {
-		return fmt.Errorf("expected length %d actual length %d", len(expected), len(actual))
+		return fmt.Errorf("expected change count of %d actual change count %d", len(expected), len(actual))
 	}
 	for i := range expected {
 		err := assertChangeEqual(expected[i], actual[i])

@@ -32,6 +32,9 @@ func Diff(from, to any) ([]Change, error) {
 }
 
 func diff(from, to any, path []string) ([]Change, error) {
+	if from == nil && to == nil {
+		return nil, nil
+	}
 	if from == nil && to != nil {
 		return []Change{
 			{
@@ -69,7 +72,7 @@ func diff(from, to any, path []string) ([]Change, error) {
 
 func diffOf[T comparable](from T, to any, path []string) []Change {
 	t, isTypeT := to.(T)
-	if !isTypeT && t == from {
+	if isTypeT && t == from {
 		return nil
 	}
 	return []Change{
@@ -124,6 +127,57 @@ func mapDiff(fromMap map[string]any, to any, path []string) ([]Change, error) {
 }
 
 func sliceDiff(fromSlice []any, to any, path []string) ([]Change, error) {
+	toSlice, toIsSlice := to.([]any)
+	if !toIsSlice {
+		return []Change{
+			{
+				ChangeType: Update,
+				Path:       path,
+				From:       fromSlice,
+				To:         toSlice,
+			},
+		}, nil
+	}
+	var changes []Change
+	f, t := 0, 0
+	for {
+		if t >= len(toSlice) && f >= len(fromSlice) {
+			break
+		} else if t >= len(toSlice) {
+			for ; f < len(fromSlice); f++ {
+				change := Change{
+					ChangeType: Delete,
+					Path:       append(path, strconv.Itoa(f)),
+					From:       fromSlice[f],
+					To:         nil}
+				changes = append(changes, change)
+			}
+			break
+		} else if f == len(fromSlice) {
+			for ; t < len(toSlice); t++ {
+				change := Change{
+					ChangeType: Create,
+					Path:       append(path, strconv.Itoa(f)),
+					From:       nil,
+					To:         toSlice[t]}
+				changes = append(changes, change)
+			}
+			break
+		} else {
+			recurseChanges, err := diff(fromSlice[f], toSlice[t], append(path, strconv.Itoa(f)))
+			if err != nil {
+				return nil, err
+			}
+			changes = append(changes, recurseChanges...)
+			f++
+			t++
+		}
+	}
+
+	return changes, nil
+}
+
+func sliceDiff1(fromSlice []any, to any, path []string) ([]Change, error) {
 	toSlice, toIsSlice := to.([]any)
 	if !toIsSlice {
 		return []Change{
