@@ -244,6 +244,43 @@ func TestDiff(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "slice_objects",
+			from: []any{
+				map[string]any{"hello": "world"},
+				map[string]any{"from": "here"},
+			},
+			to: []any{
+				map[string]any{"from": "here"},
+				map[string]any{"hello": "world"},
+			},
+			expected: []config.Change{
+				{
+					Path:       []string{"0", "hello"},
+					ChangeType: config.Delete,
+					From:       "world",
+					To:         nil,
+				},
+				{
+					Path:       []string{"0", "from"},
+					ChangeType: config.Create,
+					To:         "here",
+					From:       nil,
+				},
+				{
+					Path:       []string{"1", "from"},
+					ChangeType: config.Delete,
+					From:       "here",
+					To:         nil,
+				},
+				{
+					Path:       []string{"0", "hello"},
+					ChangeType: config.Create,
+					To:         "world",
+					From:       nil,
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
