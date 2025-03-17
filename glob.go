@@ -36,7 +36,7 @@ type GlobProvider struct {
 	direction globDirection
 }
 
-func (g *GlobProvider) Get(context GetContext) (any, error) {
+func (g *GlobProvider) Get() (any, error) {
 	var matches []string
 	var err error
 	switch g.direction {

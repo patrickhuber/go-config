@@ -16,7 +16,7 @@ func NewDotEnv(file string) *DotEnvProvider {
 	}
 }
 
-func (p *DotEnvProvider) Get(context GetContext) (any, error) {
+func (p *DotEnvProvider) Get() (any, error) {
 	file, err := os.Open(p.file)
 	if err != nil {
 		return nil, err

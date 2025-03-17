@@ -10,6 +10,6 @@ func NewMemory(memory map[string]any) *MemoryProvider {
 	}
 }
 
-func (m *MemoryProvider) Get(context GetContext) (any, error) {
+func (m *MemoryProvider) Get() (any, error) {
 	return m.memory, nil
 }

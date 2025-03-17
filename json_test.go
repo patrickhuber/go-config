@@ -33,8 +33,7 @@ func TestJson(t *testing.T) {
 				t.Fatal(err)
 			}
 			p := config.NewJson(path)
-			context := config.GetContext{}
-			actual, err := p.Get(context)
+			actual, err := p.Get()
 			if err != nil {
 				t.Fatal(err)
 			}

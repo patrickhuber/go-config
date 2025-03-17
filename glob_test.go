@@ -97,8 +97,7 @@ func TestGlob(t *testing.T) {
 				}
 			}
 			provider := config.NewGlob(dir, test.glob)
-			context := config.GetContext{}
-			actual, err := provider.Get(context)
+			actual, err := provider.Get()
 			if err != nil {
 				t.Fatal(err)
 			}

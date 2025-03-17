@@ -8,8 +8,7 @@ import (
 
 func TestMemory(t *testing.T) {
 	m := config.NewMemory(map[string]any{"hello": "world"})
-	context := config.GetContext{}
-	value, err := m.Get(context)
+	value, err := m.Get()
 	if err != nil {
 		t.Fatal(err)
 	}

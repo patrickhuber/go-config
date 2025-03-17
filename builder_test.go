@@ -44,7 +44,7 @@ type FakeProvider struct {
 	Error error
 }
 
-func (p *FakeProvider) Get(context config.GetContext) (any, error) {
+func (p *FakeProvider) Get() (any, error) {
 	if p.Error != nil {
 		return nil, p.Error
 	}
