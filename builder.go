@@ -19,8 +19,9 @@ func (b *Builder) With(provider Provider) *Builder {
 
 func (b *Builder) Build() (any, error) {
 	var result any = nil
+	context := GetContext{}
 	for _, provider := range b.providers {
-		cfg, err := provider.Get()
+		cfg, err := provider.Get(context)
 		if err != nil {
 			return nil, err
 		}

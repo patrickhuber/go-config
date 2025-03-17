@@ -16,7 +16,7 @@ func NewYaml(file string) *YamlProvider {
 	}
 }
 
-func (p *YamlProvider) Get() (any, error) {
+func (p *YamlProvider) Get(context GetContext) (any, error) {
 	buf, err := os.ReadFile(p.file)
 	if err != nil {
 		return nil, err

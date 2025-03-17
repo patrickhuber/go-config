@@ -16,7 +16,7 @@ func NewToml(file string) *TomlProvider {
 	}
 }
 
-func (p *TomlProvider) Get() (any, error) {
+func (p *TomlProvider) Get(context GetContext) (any, error) {
 	buf, err := os.ReadFile(p.file)
 	if err != nil {
 		return nil, err

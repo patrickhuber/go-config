@@ -1,5 +1,8 @@
 package config
 
 type Provider interface {
-	Get() (any, error)
+	Get(context GetContext) (any, error)
+}
+
+type GetContext struct {
 }

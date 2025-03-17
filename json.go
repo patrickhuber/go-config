@@ -15,7 +15,7 @@ func NewJson(file string) *JsonProvider {
 	}
 }
 
-func (p *JsonProvider) Get() (any, error) {
+func (p *JsonProvider) Get(context GetContext) (any, error) {
 	buf, err := os.ReadFile(p.file)
 	if err != nil {
 		return nil, err
