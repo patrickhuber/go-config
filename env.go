@@ -6,18 +6,22 @@ import (
 )
 
 type EnvProvider struct {
-	prefix string
+	prefix     string
+	transforms []Transformer
 }
 
-func NewEnv(prefix string) *EnvProvider {
+func NewEnv(prefix string, transforms ...Transformer) *EnvProvider {
 	return &EnvProvider{
-		prefix: prefix,
+		prefix:     prefix,
+		transforms: transforms,
 	}
 }
 
 func (p *EnvProvider) Get() (any, error) {
 	prefixSpecified := !strings.EqualFold(p.prefix, "")
 	cfg := map[string]any{}
+
+	// load environment variables
 	for _, env := range os.Environ() {
 		splits := strings.Split(env, "=")
 		if len(splits) < 2 {
@@ -30,5 +34,17 @@ func (p *EnvProvider) Get() (any, error) {
 		}
 		cfg[key] = value
 	}
-	return cfg, nil
+
+	// perform transforms
+	var err error
+	var current any = cfg
+	for _, transform := range p.transforms {
+		current, err = transform.Transform(current)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// return transformed result
+	return current, nil
 }

@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -10,23 +11,43 @@ import (
 
 func TestEnv(t *testing.T) {
 	type test struct {
-		name     string
-		env      map[string]string
-		prefix   string
-		expected map[string]any
+		name       string
+		env        map[string]string
+		prefix     string
+		transforms []config.Transformer
+		expected   map[string]any
 	}
 	tests := []test{
 		{
 			"prefix",
 			map[string]string{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"},
 			"TEST",
+			nil,
 			map[string]any{"TEST1": "TEST1", "TEST2": "TEST2"},
 		},
 		{
 			"noprefix",
 			map[string]string{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"},
 			"",
+			nil,
 			map[string]any{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"},
+		},
+		{
+			"prefix_transform",
+			map[string]string{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"},
+			"",
+			[]config.Transformer{config.FuncTransformer(func(instance any) (any, error) {
+				envMap := map[string]any{}
+				instanceMap, ok := instance.(map[string]any)
+				if !ok {
+					return nil, fmt.Errorf("expected instance to be of type map[string]any")
+				}
+				for k, v := range instanceMap {
+					envMap[k] = v
+				}
+				return map[string]any{"env": envMap}, nil
+			})},
+			map[string]any{"env": map[string]any{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"}},
 		},
 	}
 	for _, test := range tests {
@@ -38,7 +59,7 @@ func TestEnv(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			p := config.NewEnv(test.prefix)
+			p := config.NewEnv(test.prefix, test.transforms...)
 			actual, err := p.Get()
 			if err != nil {
 				t.Fatal(err)
