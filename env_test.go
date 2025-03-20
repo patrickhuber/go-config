@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/patrickhuber/go-config"
+	"maps"
 )
 
 func TestEnv(t *testing.T) {
@@ -42,9 +43,7 @@ func TestEnv(t *testing.T) {
 				if !ok {
 					return nil, fmt.Errorf("expected instance to be of type map[string]any")
 				}
-				for k, v := range instanceMap {
-					envMap[k] = v
-				}
+				maps.Copy(envMap, instanceMap)
 				return map[string]any{"env": envMap}, nil
 			})},
 			map[string]any{"env": map[string]any{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"}},
