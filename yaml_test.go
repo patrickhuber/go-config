@@ -28,7 +28,7 @@ func TestYaml(t *testing.T) {
 		{"mobject", "mobject.yaml", `key: value`, nil, map[string]any{"key": "value"}},
 		{"array", "array.yaml", `["one", "two", "three"]`, nil, []any{"one", "two", "three"}},
 		{"marray", "marray.yaml", "- one\r\n- two\r\n- three", nil, []any{"one", "two", "three"}},
-		{"transform", "object.yaml", `key: value`, []config.Transformer{config.FuncTransformer(func(a any) (any, error) {
+		{"transform", "transform.yaml", `key: value`, []config.Transformer{config.FuncTransformer(func(a any) (any, error) {
 			aMap, ok := a.(map[string]any)
 			if !ok {
 				return nil, fmt.Errorf("expected map but found %T", a)
