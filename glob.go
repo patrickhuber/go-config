@@ -9,19 +9,34 @@ import (
 	"strings"
 )
 
-func NewGlob(directory string, pattern string) Provider {
+// GlobProviderResolver returns the Provider for the given glob match
+type GlobProviderResolver func(match string) Provider
+
+func NewGlob(directory string, pattern string, transformers ...Transformer) Provider {
+	return NewGlobWithResolver(directory, pattern, defaultGlobProviderResolver, transformers...)
+}
+
+func NewGlobWithResolver(directory string, pattern string, resolver GlobProviderResolver, transformers ...Transformer) Provider {
 	return &globProvider{
-		direction: globDirectionDown,
-		pattern:   pattern,
-		directory: directory,
+		direction:    globDirectionDown,
+		pattern:      pattern,
+		directory:    directory,
+		transformers: transformers,
+		resolver:     resolver,
 	}
 }
 
-func NewGlobUp(directory string, pattern string) Provider {
+func NewGlobUp(directory string, pattern string, transformers ...Transformer) Provider {
+	return NewGlobUpWithResolver(directory, pattern, defaultGlobProviderResolver, transformers...)
+}
+
+func NewGlobUpWithResolver(directory string, pattern string, resolver GlobProviderResolver, transformers ...Transformer) Provider {
 	return &globProvider{
-		direction: globDirectionUp,
-		pattern:   pattern,
-		directory: directory,
+		direction:    globDirectionUp,
+		pattern:      pattern,
+		directory:    directory,
+		transformers: transformers,
+		resolver:     resolver,
 	}
 }
 
@@ -31,9 +46,11 @@ const globDirectionUp globDirection = "up"
 const globDirectionDown globDirection = "down"
 
 type globProvider struct {
-	pattern   string
-	directory string
-	direction globDirection
+	pattern      string
+	directory    string
+	direction    globDirection
+	resolver     GlobProviderResolver
+	transformers []Transformer
 }
 
 func (g *globProvider) Get(ctx *GetContext) (any, error) {
@@ -52,27 +69,33 @@ func (g *globProvider) Get(ctx *GetContext) (any, error) {
 	}
 	var providers []Provider
 	for _, match := range matches {
-		ext := filepath.Ext(match)
-		var provider Provider
-		provider = nil
-		switch ext {
-		case ".json":
-			provider = NewJson(match)
-		case ".yml", ".yaml":
-			provider = NewYaml(match)
-		case ".toml":
-			provider = NewToml(match)
-		case ".env":
-			provider = NewDotEnv(match)
-		default:
-			continue
-		}
+		provider := g.resolver(match)
 		if provider == nil {
 			continue
 		}
 		providers = append(providers, provider)
 	}
-	return NewBuilder(providers...).Build()
+	build, err := NewBuilder(providers...).Build()
+	if err != nil {
+		return nil, err
+	}
+	return transform(build, g.transformers)
+}
+
+func defaultGlobProviderResolver(match string) Provider {
+	ext := filepath.Ext(match)
+	var provider Provider
+	switch ext {
+	case ".json":
+		provider = NewJson(match)
+	case ".yml", ".yaml":
+		provider = NewYaml(match)
+	case ".toml":
+		provider = NewToml(match)
+	case ".env":
+		provider = NewDotEnv(match)
+	}
+	return provider
 }
 
 func glob(dir string, pattern string) ([]string, error) {

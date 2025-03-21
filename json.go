@@ -6,12 +6,14 @@ import (
 )
 
 type jsonProvider struct {
-	file string
+	file         string
+	transformers []Transformer
 }
 
-func NewJson(file string) Provider {
+func NewJson(file string, transformers ...Transformer) Provider {
 	return &jsonProvider{
-		file: file,
+		file:         file,
+		transformers: transformers,
 	}
 }
 
@@ -22,5 +24,8 @@ func (p *jsonProvider) Get(ctx *GetContext) (any, error) {
 	}
 	var data any
 	err = json.Unmarshal(buf, &data)
-	return data, err
+	if err != nil {
+		return nil, err
+	}
+	return transform(data, p.transformers)
 }
