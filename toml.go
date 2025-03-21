@@ -7,12 +7,14 @@ import (
 )
 
 type tomlProvider struct {
-	file string
+	file         string
+	transformers []Transformer
 }
 
-func NewToml(file string) Provider {
+func NewToml(file string, transformers ...Transformer) Provider {
 	return &tomlProvider{
-		file: file,
+		file:         file,
+		transformers: transformers,
 	}
 }
 
@@ -23,5 +25,8 @@ func (p *tomlProvider) Get(ctx *GetContext) (any, error) {
 	}
 	var data any
 	err = toml.Unmarshal(buf, &data)
-	return data, err
+	if err != nil {
+		return nil, err
+	}
+	return transform(data, p.transformers)
 }

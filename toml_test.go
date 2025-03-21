@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,13 +13,25 @@ import (
 func TestToml(t *testing.T) {
 	dir := t.TempDir()
 	type test struct {
-		name     string
-		file     string
-		content  string
-		expected any
+		name         string
+		file         string
+		content      string
+		transformers []config.Transformer
+		expected     any
 	}
 	cases := []test{
-		{"object", "object.json", `str="string"`, map[string]any{"str": "string"}},
+		{"object", "object.toml", `str="string"`, nil, map[string]any{"str": "string"}},
+		{"transform", "transform.toml", `hello="world"`, []config.Transformer{
+			config.FuncTransformer(func(a any) (any, error) {
+				aMap, ok := a.(map[string]any)
+				if !ok {
+					return nil, fmt.Errorf("expected map[string]any but found %T", a)
+				}
+				delete(aMap, "hello")
+				aMap["str"] = "string"
+				return aMap, nil
+			}),
+		}, map[string]any{"str": "string"}},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -27,7 +40,7 @@ func TestToml(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := config.NewToml(path)
+			p := config.NewToml(path, test.transformers...)
 			ctx := &config.GetContext{}
 			actual, err := p.Get(ctx)
 			if err != nil {
