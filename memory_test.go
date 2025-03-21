@@ -1,27 +1,59 @@
 package config_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/patrickhuber/go-config"
 )
 
 func TestMemory(t *testing.T) {
-	m := config.NewMemory(map[string]any{"hello": "world"})
-	ctx := &config.GetContext{}
-	value, err := m.Get(ctx)
-	if err != nil {
-		t.Fatal(err)
+	type test struct {
+		name         string
+		initial      map[string]any
+		transformers []config.Transformer
+		expected     map[string]any
 	}
-	valueMap, ok := value.(map[string]any)
-	if !ok {
-		t.Fatalf("expected map but found %T", value)
+	tests := []test{
+		{name: "passthrough", initial: map[string]any{"hello": "world"}, transformers: nil, expected: map[string]any{"hello": "world"}},
+		{name: "transform", initial: map[string]any{"hello": "world"}, transformers: []config.Transformer{config.FuncTransformer(func(a any) (any, error) {
+			aMap, ok := a.(map[string]any)
+			if !ok {
+				return nil, fmt.Errorf("expected map[string]any but found %T", a)
+			}
+			delete(aMap, "hello")
+			aMap["test"] = "test"
+			return aMap, nil
+		})}, expected: map[string]any{"test": "test"}},
 	}
-	helloValue, ok := valueMap["hello"]
-	if !ok {
-		t.Fatal("missing key 'hello'")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			m := config.NewMemory(test.initial, test.transformers...)
+			ctx := &config.GetContext{}
+			value, err := m.Get(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+			actual, ok := value.(map[string]any)
+			if !ok {
+				t.Fatalf("expected map but found %T", value)
+			}
+			for k, v := range test.expected {
+				actualValue, ok := actual[k]
+				if !ok {
+					t.Fatalf("key '%s' not found", k)
+				}
+				if actualValue != v {
+					t.Fatalf("expected key '%s' value '%s' to equal '%s'", k, actualValue, v)
+				}
+			}
+			for k, v := range actual {
+				_, ok := test.expected[k]
+				if !ok {
+					t.Fatalf("extra key '%s' value '%s' found in output", k, v)
+				}
+			}
+		})
 	}
-	if helloValue != "world" {
-		t.Fatalf("expected 'world' found %s", helloValue)
-	}
+
 }

@@ -1,15 +1,17 @@
 package config
 
 type memoryProvider struct {
-	memory map[string]any
+	memory       any
+	transformers []Transformer
 }
 
-func NewMemory(memory map[string]any) Provider {
+func NewMemory(memory any, transformers ...Transformer) Provider {
 	return &memoryProvider{
-		memory: memory,
+		memory:       memory,
+		transformers: transformers,
 	}
 }
 
 func (m *memoryProvider) Get(ctx *GetContext) (any, error) {
-	return m.memory, nil
+	return transform(m.memory, m.transformers)
 }
