@@ -7,12 +7,14 @@ import (
 )
 
 type yamlProvider struct {
-	file string
+	file         string
+	transformers []Transformer
 }
 
-func NewYaml(file string) Provider {
+func NewYaml(file string, transfomers ...Transformer) Provider {
 	return &yamlProvider{
-		file: file,
+		file:         file,
+		transformers: transfomers,
 	}
 }
 
@@ -23,5 +25,8 @@ func (p *yamlProvider) Get(ctx *GetContext) (any, error) {
 	}
 	var data any
 	err = yaml.Unmarshal(buf, &data)
-	return data, err
+	if err != nil {
+		return nil, err
+	}
+	return transform(data, p.transformers)
 }

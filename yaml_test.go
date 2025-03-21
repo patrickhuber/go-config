@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,20 +13,30 @@ import (
 func TestYaml(t *testing.T) {
 	dir := t.TempDir()
 	type test struct {
-		name     string
-		file     string
-		content  string
-		expected any
+		name         string
+		file         string
+		content      string
+		transformers []config.Transformer
+		expected     any
 	}
 	cases := []test{
-		{"string", "string.json", `"string"`, "string"},
-		{"integer", "int.json", "1234", 1234},
-		{"flat", "float.json", "1.24", float64(1.24)},
-		{"boolean", "bool.json", "true", true},
-		{"object", "object.json", `{"key": "value"}`, map[string]any{"key": "value"}},
-		{"mobject", "mobject.json", `key: value`, map[string]any{"key": "value"}},
-		{"array", "array.json", `["one", "two", "three"]`, []any{"one", "two", "three"}},
-		{"marray", "marray.json", "- one\r\n- two\r\n- three", []any{"one", "two", "three"}},
+		{"string", "string.yaml", `"string"`, nil, "string"},
+		{"integer", "int.yaml", "1234", nil, 1234},
+		{"flat", "float.yaml", "1.24", nil, float64(1.24)},
+		{"boolean", "bool.yaml", "true", nil, true},
+		{"object", "object.yaml", `{"key": "value"}`, nil, map[string]any{"key": "value"}},
+		{"mobject", "mobject.yaml", `key: value`, nil, map[string]any{"key": "value"}},
+		{"array", "array.yaml", `["one", "two", "three"]`, nil, []any{"one", "two", "three"}},
+		{"marray", "marray.yaml", "- one\r\n- two\r\n- three", nil, []any{"one", "two", "three"}},
+		{"transform", "object.yaml", `key: value`, []config.Transformer{config.FuncTransformer(func(a any) (any, error) {
+			aMap, ok := a.(map[string]any)
+			if !ok {
+				return nil, fmt.Errorf("expected map but found %T", a)
+			}
+			delete(aMap, "key")
+			aMap["hello"] = "world"
+			return aMap, nil
+		})}, map[string]any{"hello": "world"}},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -34,7 +45,7 @@ func TestYaml(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := config.NewYaml(path)
+			p := config.NewYaml(path, test.transformers...)
 			ctx := &config.GetContext{}
 			actual, err := p.Get(ctx)
 			if err != nil {
