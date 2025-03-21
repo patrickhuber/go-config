@@ -32,7 +32,8 @@ func TestFlag(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			p := config.NewFlag(test.flags, test.args)
-			cfg, err := p.Get()
+			ctx := &config.GetContext{}
+			cfg, err := p.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -17,7 +17,7 @@ func NewEnv(prefix string, transforms ...Transformer) *EnvProvider {
 	}
 }
 
-func (p *EnvProvider) Get() (any, error) {
+func (p *EnvProvider) Get(ctx *GetContext) (any, error) {
 	prefixSpecified := !strings.EqualFold(p.prefix, "")
 	cfg := map[string]any{}
 
@@ -36,15 +36,5 @@ func (p *EnvProvider) Get() (any, error) {
 	}
 
 	// perform transforms
-	var err error
-	var current any = cfg
-	for _, transform := range p.transforms {
-		current, err = transform.Transform(current)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// return transformed result
-	return current, nil
+	return transform(cfg, p.transforms)
 }

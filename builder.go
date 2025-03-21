@@ -19,19 +19,22 @@ func (b *Builder) With(provider Provider) *Builder {
 
 func (b *Builder) Build() (any, error) {
 	var result any = nil
+	ctx := &GetContext{}
 	for _, provider := range b.providers {
-		cfg, err := provider.Get()
+		cfg, err := provider.Get(ctx)
 		if err != nil {
 			return nil, err
 		}
 		if result == nil {
 			result = cfg
+			ctx.MergedConfiguration = cfg
 			continue
 		}
 		result, err = Merge(cfg, result)
 		if err != nil {
 			return nil, err
 		}
+		ctx.MergedConfiguration = result
 	}
 	return result, nil
 }

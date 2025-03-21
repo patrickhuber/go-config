@@ -1,15 +1,15 @@
 package config
 
-type MemoryProvider struct {
+type memoryProvider struct {
 	memory map[string]any
 }
 
-func NewMemory(memory map[string]any) *MemoryProvider {
-	return &MemoryProvider{
+func NewMemory(memory map[string]any) Provider {
+	return &memoryProvider{
 		memory: memory,
 	}
 }
 
-func (m *MemoryProvider) Get() (any, error) {
+func (m *memoryProvider) Get(ctx *GetContext) (any, error) {
 	return m.memory, nil
 }

@@ -96,7 +96,8 @@ func TestGlobUp(t *testing.T) {
 			}
 			workingDirectory := filepath.Join(dir, test.dir)
 			provider := config.NewGlobUp(workingDirectory, test.glob)
-			actual, err := provider.Get()
+			ctx := &config.GetContext{}
+			actual, err := provider.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -9,16 +9,16 @@ import (
 	"strings"
 )
 
-func NewGlob(directory string, pattern string) *GlobProvider {
-	return &GlobProvider{
+func NewGlob(directory string, pattern string) Provider {
+	return &globProvider{
 		direction: globDirectionDown,
 		pattern:   pattern,
 		directory: directory,
 	}
 }
 
-func NewGlobUp(directory string, pattern string) *GlobProvider {
-	return &GlobProvider{
+func NewGlobUp(directory string, pattern string) Provider {
+	return &globProvider{
 		direction: globDirectionUp,
 		pattern:   pattern,
 		directory: directory,
@@ -30,13 +30,13 @@ type globDirection string
 const globDirectionUp globDirection = "up"
 const globDirectionDown globDirection = "down"
 
-type GlobProvider struct {
+type globProvider struct {
 	pattern   string
 	directory string
 	direction globDirection
 }
 
-func (g *GlobProvider) Get() (any, error) {
+func (g *globProvider) Get(ctx *GetContext) (any, error) {
 	var matches []string
 	var err error
 	switch g.direction {

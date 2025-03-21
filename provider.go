@@ -1,5 +1,9 @@
 package config
 
 type Provider interface {
-	Get() (any, error)
+	Get(ctx *GetContext) (any, error)
+}
+
+type GetContext struct {
+	MergedConfiguration any
 }

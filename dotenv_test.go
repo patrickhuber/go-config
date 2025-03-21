@@ -47,8 +47,8 @@ func TestDotEnv(t *testing.T) {
 				t.Fatal(err)
 			}
 			file.Close()
-
-			actual, err := config.NewDotEnv(filePath).Get()
+			ctx := &config.GetContext{}
+			actual, err := config.NewDotEnv(filePath).Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

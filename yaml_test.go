@@ -35,7 +35,8 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 			p := config.NewYaml(path)
-			actual, err := p.Get()
+			ctx := &config.GetContext{}
+			actual, err := p.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

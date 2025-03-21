@@ -28,7 +28,8 @@ func TestToml(t *testing.T) {
 				t.Fatal(err)
 			}
 			p := config.NewToml(path)
-			actual, err := p.Get()
+			ctx := &config.GetContext{}
+			actual, err := p.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

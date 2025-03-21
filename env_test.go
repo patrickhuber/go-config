@@ -6,8 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/patrickhuber/go-config"
 	"maps"
+
+	"github.com/patrickhuber/go-config"
 )
 
 func TestEnv(t *testing.T) {
@@ -59,7 +60,8 @@ func TestEnv(t *testing.T) {
 				}
 			}
 			p := config.NewEnv(test.prefix, test.transforms...)
-			actual, err := p.Get()
+			ctx := &config.GetContext{}
+			actual, err := p.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

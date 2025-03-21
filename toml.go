@@ -6,17 +6,17 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type TomlProvider struct {
+type tomlProvider struct {
 	file string
 }
 
-func NewToml(file string) *TomlProvider {
-	return &TomlProvider{
+func NewToml(file string) Provider {
+	return &tomlProvider{
 		file: file,
 	}
 }
 
-func (p *TomlProvider) Get() (any, error) {
+func (p *tomlProvider) Get(ctx *GetContext) (any, error) {
 	buf, err := os.ReadFile(p.file)
 	if err != nil {
 		return nil, err

@@ -6,17 +6,17 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type YamlProvider struct {
+type yamlProvider struct {
 	file string
 }
 
-func NewYaml(file string) *YamlProvider {
-	return &YamlProvider{
+func NewYaml(file string) Provider {
+	return &yamlProvider{
 		file: file,
 	}
 }
 
-func (p *YamlProvider) Get() (any, error) {
+func (p *yamlProvider) Get(ctx *GetContext) (any, error) {
 	buf, err := os.ReadFile(p.file)
 	if err != nil {
 		return nil, err

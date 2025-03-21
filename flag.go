@@ -51,19 +51,19 @@ func (s *StringSliceFlag) Value() any {
 	return s.value
 }
 
-type FlagProvider struct {
+type flagProvider struct {
 	flags []Flag
 	args  []string
 }
 
-func NewFlag(flags []Flag, args []string) *FlagProvider {
-	return &FlagProvider{
+func NewFlag(flags []Flag, args []string) Provider {
+	return &flagProvider{
 		flags: flags,
 		args:  args,
 	}
 }
 
-func (p *FlagProvider) Get() (any, error) {
+func (p *flagProvider) Get(ctx *GetContext) (any, error) {
 	m := map[string]any{}
 	flagset := flag.NewFlagSet("any", flag.ContinueOnError)
 	for _, f := range p.flags {

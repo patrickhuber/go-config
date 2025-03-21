@@ -5,17 +5,17 @@ import (
 	"os"
 )
 
-type JsonProvider struct {
+type jsonProvider struct {
 	file string
 }
 
-func NewJson(file string) *JsonProvider {
-	return &JsonProvider{
+func NewJson(file string) Provider {
+	return &jsonProvider{
 		file: file,
 	}
 }
 
-func (p *JsonProvider) Get() (any, error) {
+func (p *jsonProvider) Get(ctx *GetContext) (any, error) {
 	buf, err := os.ReadFile(p.file)
 	if err != nil {
 		return nil, err
