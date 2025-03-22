@@ -7,3 +7,5 @@ type Provider interface {
 type GetContext struct {
 	MergedConfiguration any
 }
+
+type SetContext struct{}

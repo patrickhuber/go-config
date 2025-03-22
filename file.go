@@ -30,3 +30,11 @@ func (provider *fileProvider) Get(ctx *GetContext) (any, error) {
 	}
 	return transform(data, provider.transformers)
 }
+
+func (provider *fileProvider) Set(ctx *SetContext, value any) error {
+	buf, err := provider.codec.Marshal(value)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(provider.file, buf, 0644)
+}
