@@ -17,7 +17,7 @@ yaml: yes
 
 > config.json
 ```json
-json: yes
+{"json": "yes"}
 ```
 
 > config.toml
