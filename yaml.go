@@ -1,32 +1,21 @@
 package config
 
-import (
-	"os"
-
-	"gopkg.in/yaml.v3"
-)
-
-type yamlProvider struct {
-	file         string
-	transformers []Transformer
-}
+import "gopkg.in/yaml.v3"
 
 func NewYaml(file string, transfomers ...Transformer) Provider {
-	return &yamlProvider{
-		file:         file,
-		transformers: transfomers,
-	}
+	return NewFile(file, NewYamlCodec(), transfomers...)
 }
 
-func (p *yamlProvider) Get(ctx *GetContext) (any, error) {
-	buf, err := os.ReadFile(p.file)
-	if err != nil {
-		return nil, err
-	}
-	var data any
-	err = yaml.Unmarshal(buf, &data)
-	if err != nil {
-		return nil, err
-	}
-	return transform(data, p.transformers)
+type yamlCodec struct{}
+
+func NewYamlCodec() Codec {
+	return &yamlCodec{}
+}
+
+func (codec *yamlCodec) Unmarshal(buf []byte, data any) error {
+	return yaml.Unmarshal(buf, data)
+}
+
+func (codec *yamlCodec) Marshal(data any) ([]byte, error) {
+	return yaml.Marshal(data)
 }

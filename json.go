@@ -2,30 +2,21 @@ package config
 
 import (
 	"encoding/json"
-	"os"
 )
 
-type jsonProvider struct {
-	file         string
-	transformers []Transformer
-}
-
 func NewJson(file string, transformers ...Transformer) Provider {
-	return &jsonProvider{
-		file:         file,
-		transformers: transformers,
-	}
+	return NewFile(file, NewJsonCodec(), transformers...)
 }
 
-func (p *jsonProvider) Get(ctx *GetContext) (any, error) {
-	buf, err := os.ReadFile(p.file)
-	if err != nil {
-		return nil, err
-	}
-	var data any
-	err = json.Unmarshal(buf, &data)
-	if err != nil {
-		return nil, err
-	}
-	return transform(data, p.transformers)
+type jsonCodec struct{}
+
+func NewJsonCodec() Codec {
+	return &jsonCodec{}
+}
+func (codec *jsonCodec) Unmarshal(buf []byte, data any) error {
+	return json.Unmarshal(buf, data)
+}
+
+func (codec *jsonCodec) Marshal(data any) ([]byte, error) {
+	return json.Marshal(data)
 }
