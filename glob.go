@@ -17,6 +17,18 @@ type GlobOption struct {
 	Resolver     GlobProviderResolver
 }
 
+type globDirection string
+
+const globDirectionUp globDirection = "up"
+const globDirectionDown globDirection = "down"
+
+type globProvider struct {
+	pattern   string
+	directory string
+	direction globDirection
+	options   GlobOption
+}
+
 func NewGlob(directory string, pattern string, options ...GlobOption) Provider {
 	return newGlobWithDirection(directory, pattern, globDirectionDown, options...)
 }
@@ -39,18 +51,6 @@ func newGlobWithDirection(directory string, pattern string, direction globDirect
 		provider.options.Resolver = defaultGlobProviderResolver
 	}
 	return provider
-}
-
-type globDirection string
-
-const globDirectionUp globDirection = "up"
-const globDirectionDown globDirection = "down"
-
-type globProvider struct {
-	pattern   string
-	directory string
-	direction globDirection
-	options   GlobOption
 }
 
 func (g *globProvider) Get(ctx *GetContext) (any, error) {
