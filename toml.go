@@ -13,8 +13,13 @@ type tomlCodec struct{}
 func NewTomlCodec() Codec {
 	return &tomlCodec{}
 }
-func (codec *tomlCodec) Unmarshal(buf []byte, data any) error {
-	return toml.Unmarshal(buf, data)
+func (codec *tomlCodec) Unmarshal(buf []byte) (any, error) {
+	var data any
+	err := toml.Unmarshal(buf, &data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (codec *tomlCodec) Marshal(data any) ([]byte, error) {

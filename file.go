@@ -44,8 +44,7 @@ func (provider *fileProvider) Get(ctx *GetContext) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	var data any
-	err = provider.codec.Unmarshal(buf, &data)
+	data, err := provider.codec.Unmarshal(buf)
 	if err != nil {
 		return nil, err
 	}

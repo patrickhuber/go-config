@@ -5,7 +5,7 @@ type Marshaler interface {
 }
 
 type Unmarshaler interface {
-	Unmarshal(buf []byte, data any) error
+	Unmarshal(buf []byte) (any, error)
 }
 
 type Codec interface {

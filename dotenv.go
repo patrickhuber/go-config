@@ -1,35 +1,29 @@
 package config
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/joho/godotenv"
 )
 
-type DotEnvProvider struct {
-	file string
+func NewDotEnv(file string, options ...FileOption) Provider {
+	return NewFile(file, &dotEnvCodec{}, options...)
 }
 
-func NewDotEnv(file string) *DotEnvProvider {
-	return &DotEnvProvider{
-		file: file,
-	}
+type dotEnvCodec struct{}
+
+func (codec *dotEnvCodec) Marshal(data any) ([]byte, error) {
+	return nil, fmt.Errorf("dotEnvCodec Marshal is not implemented")
 }
 
-func (p *DotEnvProvider) Get(ctx *GetContext) (any, error) {
-	file, err := os.Open(p.file)
+func (codec *dotEnvCodec) Unmarshal(buf []byte) (any, error) {
+	stringAnyMap := make(map[string]any)
+	stringStringMap, err := godotenv.UnmarshalBytes(buf)
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
-
-	result := make(map[string]any)
-	kv, err := godotenv.Parse(file)
-	if err != nil {
-		return nil, err
+	for k, v := range stringStringMap {
+		stringAnyMap[k] = v
 	}
-	for k, v := range kv {
-		result[k] = v
-	}
-	return result, nil
+	return stringAnyMap, nil
 }

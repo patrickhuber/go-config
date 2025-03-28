@@ -12,8 +12,13 @@ func NewYamlCodec() Codec {
 	return &yamlCodec{}
 }
 
-func (codec *yamlCodec) Unmarshal(buf []byte, data any) error {
-	return yaml.Unmarshal(buf, data)
+func (codec *yamlCodec) Unmarshal(buf []byte) (any, error) {
+	var data any
+	err := yaml.Unmarshal(buf, &data)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func (codec *yamlCodec) Marshal(data any) ([]byte, error) {
