@@ -46,7 +46,7 @@ func TestJson(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := config.NewJson(path, test.transformers...)
+			p := config.NewJson(path, config.FileOption{Transformers: test.transformers})
 			ctx := &config.GetContext{}
 			actual, err := p.Get(ctx)
 			if err != nil {

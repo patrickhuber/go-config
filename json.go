@@ -4,8 +4,12 @@ import (
 	"encoding/json"
 )
 
-func NewJson(file string, transformers ...Transformer) Provider {
-	return NewFile(file, NewJsonCodec(), transformers...)
+type JsonOption struct {
+	Transformers []Transformer
+}
+
+func NewJson(file string, options ...FileOption) Provider {
+	return NewFile(file, NewJsonCodec(), options...)
 }
 
 type jsonCodec struct{}

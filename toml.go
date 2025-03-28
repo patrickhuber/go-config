@@ -4,8 +4,8 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-func NewToml(file string, transformers ...Transformer) Provider {
-	return NewFile(file, NewTomlCodec(), transformers...)
+func NewToml(file string, options ...FileOption) Provider {
+	return NewFile(file, NewTomlCodec(), options...)
 }
 
 type tomlCodec struct{}

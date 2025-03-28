@@ -40,7 +40,7 @@ func TestToml(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := config.NewToml(path, test.transformers...)
+			p := config.NewToml(path, config.FileOption{Transformers: test.transformers})
 			ctx := &config.GetContext{}
 			actual, err := p.Get(ctx)
 			if err != nil {

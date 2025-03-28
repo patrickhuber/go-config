@@ -2,8 +2,8 @@ package config
 
 import "gopkg.in/yaml.v3"
 
-func NewYaml(file string, transfomers ...Transformer) Provider {
-	return NewFile(file, NewYamlCodec(), transfomers...)
+func NewYaml(file string, options ...FileOption) Provider {
+	return NewFile(file, NewYamlCodec(), options...)
 }
 
 type yamlCodec struct{}

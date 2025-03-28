@@ -12,32 +12,33 @@ import (
 // GlobProviderResolver returns the Provider for the given glob match
 type GlobProviderResolver func(match string) Provider
 
-func NewGlob(directory string, pattern string, transformers ...Transformer) Provider {
-	return NewGlobWithResolver(directory, pattern, defaultGlobProviderResolver, transformers...)
+type GlobOption struct {
+	Transformers []Transformer
+	Resolver     GlobProviderResolver
 }
 
-func NewGlobWithResolver(directory string, pattern string, resolver GlobProviderResolver, transformers ...Transformer) Provider {
-	return &globProvider{
-		direction:    globDirectionDown,
-		pattern:      pattern,
-		directory:    directory,
-		transformers: transformers,
-		resolver:     resolver,
+func NewGlob(directory string, pattern string, options ...GlobOption) Provider {
+	return newGlobWithDirection(directory, pattern, globDirectionDown, options...)
+}
+
+func NewGlobUp(directory string, pattern string, options ...GlobOption) Provider {
+	return newGlobWithDirection(directory, pattern, globDirectionUp, options...)
+}
+
+func newGlobWithDirection(directory string, pattern string, direction globDirection, options ...GlobOption) Provider {
+	provider := &globProvider{
+		direction: direction,
+		pattern:   pattern,
+		directory: directory,
 	}
-}
-
-func NewGlobUp(directory string, pattern string, transformers ...Transformer) Provider {
-	return NewGlobUpWithResolver(directory, pattern, defaultGlobProviderResolver, transformers...)
-}
-
-func NewGlobUpWithResolver(directory string, pattern string, resolver GlobProviderResolver, transformers ...Transformer) Provider {
-	return &globProvider{
-		direction:    globDirectionUp,
-		pattern:      pattern,
-		directory:    directory,
-		transformers: transformers,
-		resolver:     resolver,
+	for _, option := range options {
+		provider.options.Transformers = append(provider.options.Transformers, option.Transformers...)
+		provider.options.Resolver = option.Resolver
 	}
+	if provider.options.Resolver == nil {
+		provider.options.Resolver = defaultGlobProviderResolver
+	}
+	return provider
 }
 
 type globDirection string
@@ -46,11 +47,10 @@ const globDirectionUp globDirection = "up"
 const globDirectionDown globDirection = "down"
 
 type globProvider struct {
-	pattern      string
-	directory    string
-	direction    globDirection
-	resolver     GlobProviderResolver
-	transformers []Transformer
+	pattern   string
+	directory string
+	direction globDirection
+	options   GlobOption
 }
 
 func (g *globProvider) Get(ctx *GetContext) (any, error) {
@@ -69,7 +69,7 @@ func (g *globProvider) Get(ctx *GetContext) (any, error) {
 	}
 	var providers []Provider
 	for _, match := range matches {
-		provider := g.resolver(match)
+		provider := g.options.Resolver(match)
 		if provider == nil {
 			continue
 		}
@@ -79,7 +79,7 @@ func (g *globProvider) Get(ctx *GetContext) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return transform(build, g.transformers)
+	return transform(build, g.options.Transformers)
 }
 
 func defaultGlobProviderResolver(match string) Provider {

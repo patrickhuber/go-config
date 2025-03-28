@@ -110,14 +110,15 @@ func TestGlob(t *testing.T) {
 					}
 					return aMap, nil
 				})
+				transformers := []config.Transformer{transformer}
 				ext := filepath.Ext(match)
 				switch ext {
 				case ".json":
-					return config.NewJson(match, transformer)
+					return config.NewJson(match, config.FileOption{Transformers: transformers})
 				case ".yaml", ".yml":
-					return config.NewYaml(match, transformer)
+					return config.NewYaml(match, config.FileOption{Transformers: transformers})
 				case ".toml":
-					return config.NewToml(match, transformer)
+					return config.NewToml(match, config.FileOption{Transformers: transformers})
 				}
 				return nil
 			},
@@ -150,12 +151,8 @@ func TestGlob(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			var provider config.Provider
-			if test.resolver != nil {
-				provider = config.NewGlobWithResolver(dir, test.glob, test.resolver)
-			} else {
-				provider = config.NewGlob(dir, test.glob)
-			}
+
+			provider := config.NewGlob(dir, test.glob, config.GlobOption{Resolver: test.resolver})
 
 			ctx := &config.GetContext{}
 			actual, err := provider.Get(ctx)
