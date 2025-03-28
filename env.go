@@ -6,19 +6,30 @@ import (
 )
 
 type EnvProvider struct {
-	prefix     string
-	transforms []Transformer
+	options []EnvOption
 }
 
-func NewEnv(prefix string, transforms ...Transformer) *EnvProvider {
+type EnvOption struct {
+	Prefix       string
+	Transformers []Transformer
+}
+
+func NewEnv(options ...EnvOption) *EnvProvider {
 	return &EnvProvider{
-		prefix:     prefix,
-		transforms: transforms,
+		options: options,
 	}
 }
 
 func (p *EnvProvider) Get(ctx *GetContext) (any, error) {
-	prefixSpecified := !strings.EqualFold(p.prefix, "")
+	prefix := ""
+	prefixSpecified := false
+	for _, option := range p.options {
+		if strings.EqualFold(option.Prefix, "") {
+			continue
+		}
+		prefixSpecified = true
+		prefix = option.Prefix
+	}
 	cfg := map[string]any{}
 
 	// load environment variables
@@ -29,12 +40,16 @@ func (p *EnvProvider) Get(ctx *GetContext) (any, error) {
 		}
 		key := splits[0]
 		value := splits[1]
-		if prefixSpecified && !strings.HasPrefix(key, p.prefix) {
+		if prefixSpecified && !strings.HasPrefix(key, prefix) {
 			continue
 		}
 		cfg[key] = value
 	}
 
+	var transformers []Transformer
+	for _, option := range p.options {
+		transformers = append(transformers, option.Transformers...)
+	}
 	// perform transforms
-	return transform(cfg, p.transforms)
+	return transform(cfg, transformers)
 }

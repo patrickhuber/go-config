@@ -59,7 +59,9 @@ func TestEnv(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			p := config.NewEnv(test.prefix, test.transforms...)
+			p := config.NewEnv(config.EnvOption{
+				Transformers: test.transforms,
+				Prefix:       test.prefix})
 			ctx := &config.GetContext{}
 			actual, err := p.Get(ctx)
 			if err != nil {
