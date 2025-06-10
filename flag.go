@@ -52,14 +52,20 @@ func (s *StringSliceFlag) Value() any {
 }
 
 type flagProvider struct {
-	flags []Flag
-	args  []string
+	flags   []Flag
+	args    []string
+	options []FlagOption
 }
 
-func NewFlag(flags []Flag, args []string) Provider {
+type FlagOption struct {
+	Transformers []Transformer
+}
+
+func NewFlag(flags []Flag, args []string, options ...FlagOption) Provider {
 	return &flagProvider{
-		flags: flags,
-		args:  args,
+		flags:   flags,
+		args:    args,
+		options: options,
 	}
 }
 
@@ -74,10 +80,14 @@ func (p *flagProvider) Get(ctx *GetContext) (any, error) {
 			flagset.Var(ty, ty.Name, ty.Usage)
 		}
 	}
+
+	// parse flags
 	err := flagset.Parse(p.args)
 	if err != nil {
 		return nil, err
 	}
+
+	// visit all flags and set the flags in the map
 	flagset.Visit(func(f *flag.Flag) {
 		flagValue, ok := f.Value.(Flag)
 		if !ok {
@@ -85,5 +95,16 @@ func (p *flagProvider) Get(ctx *GetContext) (any, error) {
 		}
 		m[f.Name] = flagValue.Value()
 	})
-	return m, nil
+
+	// run the transforms
+	var result any = m
+	for _, option := range p.options {
+		for _, transformer := range option.Transformers {
+			result, err = transformer.Transform(result)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return result, nil
 }
