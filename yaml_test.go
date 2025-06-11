@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -28,15 +27,12 @@ func TestYaml(t *testing.T) {
 		{"mobject", "mobject.yaml", `key: value`, nil, map[string]any{"key": "value"}},
 		{"array", "array.yaml", `["one", "two", "three"]`, nil, []any{"one", "two", "three"}},
 		{"marray", "marray.yaml", "- one\r\n- two\r\n- three", nil, []any{"one", "two", "three"}},
-		{"transform", "transform.yaml", `key: value`, []config.Transformer{config.FuncTransformer(func(a any) (any, error) {
-			aMap, ok := a.(map[string]any)
-			if !ok {
-				return nil, fmt.Errorf("expected map but found %T", a)
-			}
-			delete(aMap, "key")
-			aMap["hello"] = "world"
-			return aMap, nil
-		})}, map[string]any{"hello": "world"}},
+		{"transform", "transform.yaml", `key: value`, []config.Transformer{
+			config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
+				delete(m, "key")
+				m["hello"] = "world"
+				return m, nil
+			})}, map[string]any{"hello": "world"}},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {

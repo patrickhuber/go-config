@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/patrickhuber/go-config"
@@ -16,15 +15,12 @@ func TestMemory(t *testing.T) {
 	}
 	tests := []test{
 		{name: "passthrough", initial: map[string]any{"hello": "world"}, transformers: nil, expected: map[string]any{"hello": "world"}},
-		{name: "transform", initial: map[string]any{"hello": "world"}, transformers: []config.Transformer{config.FuncTransformer(func(a any) (any, error) {
-			aMap, ok := a.(map[string]any)
-			if !ok {
-				return nil, fmt.Errorf("expected map[string]any but found %T", a)
-			}
-			delete(aMap, "hello")
-			aMap["test"] = "test"
-			return aMap, nil
-		})}, expected: map[string]any{"test": "test"}},
+		{name: "transform", initial: map[string]any{"hello": "world"}, transformers: []config.Transformer{
+			config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
+				delete(m, "hello")
+				m["test"] = "test"
+				return m, nil
+			})}, expected: map[string]any{"test": "test"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

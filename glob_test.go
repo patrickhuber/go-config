@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -100,15 +99,11 @@ func TestGlob(t *testing.T) {
 			},
 			glob: "**/config.*",
 			resolver: func(match string) config.Provider {
-				transformer := config.FuncTransformer(func(a any) (any, error) {
-					aMap, ok := a.(map[string]any)
-					if !ok {
-						return nil, fmt.Errorf("expected map[string]any but found %T", a)
+				transformer := config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
+					for k := range m {
+						m[k] = k
 					}
-					for k := range aMap {
-						aMap[k] = k
-					}
-					return aMap, nil
+					return m, nil
 				})
 				transformers := []config.Transformer{transformer}
 				ext := filepath.Ext(match)

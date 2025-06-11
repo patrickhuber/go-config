@@ -1,5 +1,7 @@
 package config
 
+import "fmt"
+
 type Transformer interface {
 	Transform(instance any) (any, error)
 }
@@ -21,6 +23,28 @@ func FuncTransformer(transform func(any) (any, error)) Transformer {
 func TransformProvider(transform func(any) (any, error)) Provider {
 	return &transformerProvider{
 		transformer: FuncTransformer(transform),
+	}
+}
+
+func FuncTypedTransformer[T any](transform func(T) (T, error)) Transformer {
+	return &funcTransformer{
+		transform: func(a any) (any, error) {
+
+			// if config is nil, do no transformation
+			if a == nil {
+				return a, nil
+			}
+
+			// if config is not a map, throw an error
+			m, ok := a.(T)
+			if !ok {
+				var zero T
+				return nil, fmt.Errorf("unable to convert %T to %T", a, zero)
+			}
+
+			// run the transform function over the map
+			return transform(m)
+		},
 	}
 }
 

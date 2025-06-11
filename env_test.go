@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -38,13 +37,9 @@ func TestEnv(t *testing.T) {
 			"prefix_transform",
 			map[string]string{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"},
 			"",
-			[]config.Transformer{config.FuncTransformer(func(instance any) (any, error) {
+			[]config.Transformer{config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
 				envMap := map[string]any{}
-				instanceMap, ok := instance.(map[string]any)
-				if !ok {
-					return nil, fmt.Errorf("expected instance to be of type map[string]any")
-				}
-				maps.Copy(envMap, instanceMap)
+				maps.Copy(envMap, m)
 				return map[string]any{"env": envMap}, nil
 			})},
 			map[string]any{"env": map[string]any{"TEST1": "TEST1", "TEST2": "TEST2", "NOTEST": "NOTEST"}},

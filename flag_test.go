@@ -33,14 +33,7 @@ func TestFlag(t *testing.T) {
 			name:  "transform",
 			args:  []string{"--test", "abc"},
 			flags: []config.Flag{&config.StringFlag{Name: "test", Default: "", Usage: "uses the test"}},
-			transform: config.FuncTransformer(func(a any) (any, error) {
-				if a == nil {
-					return nil, nil
-				}
-				m, ok := a.(map[string]any)
-				if !ok {
-					return a, nil
-				}
+			transform: config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
 				return map[string]any{"root": m}, nil
 			}),
 			expected: map[string]any{"root": map[string]any{"test": "abc"}},

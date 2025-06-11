@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -22,14 +21,10 @@ func TestToml(t *testing.T) {
 	cases := []test{
 		{"object", "object.toml", `str="string"`, nil, map[string]any{"str": "string"}},
 		{"transform", "transform.toml", `hello="world"`, []config.Transformer{
-			config.FuncTransformer(func(a any) (any, error) {
-				aMap, ok := a.(map[string]any)
-				if !ok {
-					return nil, fmt.Errorf("expected map[string]any but found %T", a)
-				}
-				delete(aMap, "hello")
-				aMap["str"] = "string"
-				return aMap, nil
+			config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
+				delete(m, "hello")
+				m["str"] = "string"
+				return m, nil
 			}),
 		}, map[string]any{"str": "string"}},
 	}

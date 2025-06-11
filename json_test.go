@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -27,15 +26,11 @@ func TestJson(t *testing.T) {
 		{"object", "object.json", `{"key": "value"}`, nil, map[string]any{"key": "value"}},
 		{"array", "array.json", `["one", "two", "three"]`, nil, []any{"one", "two", "three"}},
 		{"transform", "transform.json", `{"key": "value"}`, []config.Transformer{
-			config.FuncTransformer(func(a any) (any, error) {
-				aMap, ok := a.(map[string]any)
-				if !ok {
-					return nil, fmt.Errorf("expected map[string]any found %T", a)
+			config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
+				for k := range m {
+					m[k] = k
 				}
-				for k := range aMap {
-					aMap[k] = k
-				}
-				return aMap, nil
+				return m, nil
 			}),
 		}, map[string]any{"key": "key"}},
 	}
