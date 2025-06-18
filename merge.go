@@ -21,6 +21,11 @@ func Merge(from any, to any) (any, error) {
 }
 
 func mergeMap(fromMap map[string]any, to any) (any, error) {
+	// if to is nil, return fromMap cloned
+	if to == nil {
+		return maps.Clone(fromMap), nil
+	}
+
 	// check if to is a map, if not return to
 	toMap, ok := to.(map[string]any)
 	if !ok {

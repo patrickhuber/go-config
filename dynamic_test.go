@@ -31,7 +31,12 @@ func TestDynamic(t *testing.T) {
 		return config.NewYaml(filePath), nil
 	})
 	builder := config.NewBuilder(envProvider, dynamicProvider)
-	cfg, err := builder.Build()
+	root, err := builder.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cfg, err := root.Get(&config.GetContext{})
 	if err != nil {
 		t.Fatal(err)
 	}

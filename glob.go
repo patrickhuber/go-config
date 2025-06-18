@@ -75,7 +75,11 @@ func (g *globProvider) Get(ctx *GetContext) (any, error) {
 		}
 		providers = append(providers, provider)
 	}
-	build, err := NewBuilder(providers...).Build()
+	root, err := NewBuilder(providers...).Build()
+	if err != nil {
+		return nil, err
+	}
+	build, err := root.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
