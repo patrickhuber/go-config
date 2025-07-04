@@ -15,10 +15,6 @@ func NewRoot(providers ...Provider) Root {
 	}
 }
 
-func (r *root) With(provider Provider) {
-	r.providers = append(r.providers, provider)
-}
-
 func (r *root) Providers() []Provider {
 	return r.providers
 }
