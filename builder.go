@@ -16,6 +16,6 @@ func (b *Builder) With(provider Provider) *Builder {
 	return b
 }
 
-func (b *Builder) Build() (Root, error) {
-	return NewRoot(b.providers...), nil
+func (b *Builder) Build() Root {
+	return NewRoot(b.providers...)
 }

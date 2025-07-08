@@ -75,15 +75,13 @@ func (g *globProvider) Get(ctx *GetContext) (any, error) {
 		}
 		providers = append(providers, provider)
 	}
-	root, err := NewBuilder(providers...).Build()
+	root := NewRoot(providers...)
+
+	data, err := root.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
-	build, err := root.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return transform(build, g.options.Transformers)
+	return transform(data, g.options.Transformers)
 }
 
 func defaultGlobProviderResolver(match string) Provider {
