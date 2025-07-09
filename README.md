@@ -42,16 +42,15 @@ import (
 )
 func main(){
     args := []string{"--hello", "world"}
-    
+
     // Create a target for cross-platform abstractions
-    target := cross.New(platform.Linux, arch.AMD64)
+    target := cross.NewTest(platform.Linux, arch.AMD64)
     filesystem := target.FS()
-    
-    // Create environment provider and set environment variable
-    osProvider := target.OS()
-    osEnv := osProvider.Env()
+
+    // Use environment provider from target and set environment variable
+    osEnv := target.Env()
     osEnv.Set("env", "yes")
-    
+
     builder := config.NewBuilder(
         config.NewYaml(filesystem, "config.yml"),
         config.NewJson(filesystem, "config.json"),
@@ -59,15 +58,16 @@ func main(){
         config.NewEnv(osEnv, config.EnvOption{Prefix: "env"}),
         config.NewDotEnv(filesystem, ".env"),
         config.NewFlag([]config.Flag{
-            config.StringFlag{
+            &config.StringFlag{
                 Name: "hello",
             },
         }, args),
-    )    
-    cfg, err := builder.Build()
-    if err != nil{
+    )
+    root := builder.Build()
+    cfg, err := root.Get(&config.GetContext{})
+    if err != nil {
         log.Fatal(err)
-    }else{
+    } else {
         log.Printf("%v", cfg)
     }
 }
