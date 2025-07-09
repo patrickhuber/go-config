@@ -1,12 +1,13 @@
 package config
 
 import (
-	"os"
+	"github.com/patrickhuber/go-cross/fs"
 )
 
 type fileProvider struct {
 	file    string
 	codec   Codec
+	fs      fs.FS
 	options []FileOption
 }
 
@@ -17,10 +18,11 @@ type FileOption struct {
 	BeforeGet    FileBeforeGet
 }
 
-func NewFile(file string, codec Codec, options ...FileOption) Provider {
+func NewFile(filesystem fs.FS, file string, codec Codec, options ...FileOption) Provider {
 	provider := &fileProvider{
 		file:    file,
 		codec:   codec,
+		fs:      filesystem,
 		options: options,
 	}
 	return provider
@@ -40,7 +42,7 @@ func (provider *fileProvider) Get(ctx *GetContext) (any, error) {
 			return nil, err
 		}
 	}
-	buf, err := os.ReadFile(provider.file)
+	buf, err := provider.fs.ReadFile(provider.file)
 	if err != nil {
 		return nil, err
 	}
@@ -60,5 +62,5 @@ func (provider *fileProvider) Set(ctx *SetContext, value any) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(provider.file, buf, 0644)
+	return provider.fs.WriteFile(provider.file, buf, 0644)
 }

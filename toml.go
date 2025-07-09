@@ -2,10 +2,12 @@ package config
 
 import (
 	"github.com/BurntSushi/toml"
+
+	"github.com/patrickhuber/go-cross/fs"
 )
 
-func NewToml(file string, options ...FileOption) Provider {
-	return NewFile(file, NewTomlCodec(), options...)
+func NewToml(filesystem fs.FS, file string, options ...FileOption) Provider {
+	return NewFile(filesystem, file, NewTomlCodec(), options...)
 }
 
 type tomlCodec struct{}

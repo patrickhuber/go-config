@@ -1,16 +1,26 @@
 package config_test
 
 import (
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/patrickhuber/go-config"
+	"github.com/patrickhuber/go-cross"
+	"github.com/patrickhuber/go-cross/arch"
+	"github.com/patrickhuber/go-cross/platform"
 )
 
 func TestJson(t *testing.T) {
-	dir := t.TempDir()
+	// Use Target for cross-platform abstractions
+	target := cross.NewTest(platform.Linux, arch.AMD64)
+
+	// Use the filesystem from the target
+	filesystem := target.FS()
+	path := target.Path()
+
+	// Use a base directory in the memory filesystem
+	testDir := "/test"
+
 	type test struct {
 		name         string
 		file         string
@@ -36,12 +46,27 @@ func TestJson(t *testing.T) {
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			path := filepath.Join(dir, test.file)
-			err := os.WriteFile(path, []byte(test.content), 0666)
+			testFilePath := path.Join(testDir, test.file)
+			fileDirectory := path.Dir(testFilePath)
+
+			// Ensure directory exists
+			exists, err := filesystem.Exists(fileDirectory)
 			if err != nil {
 				t.Fatal(err)
 			}
-			p := config.NewJson(path, config.FileOption{Transformers: test.transformers})
+			if !exists {
+				err := filesystem.MkdirAll(fileDirectory, 0666)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			err = filesystem.WriteFile(testFilePath, []byte(test.content), 0666)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			p := config.NewJson(filesystem, testFilePath, config.FileOption{Transformers: test.transformers})
 			ctx := &config.GetContext{}
 			actual, err := p.Get(ctx)
 			if err != nil {

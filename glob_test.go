@@ -1,13 +1,14 @@
 package config_test
 
 import (
-	"errors"
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/patrickhuber/go-config"
+	"github.com/patrickhuber/go-cross"
+	"github.com/patrickhuber/go-cross/arch"
+	"github.com/patrickhuber/go-cross/fs"
+	"github.com/patrickhuber/go-cross/platform"
 )
 
 func TestGlob(t *testing.T) {
@@ -98,7 +99,7 @@ func TestGlob(t *testing.T) {
 				"toml": "toml",
 			},
 			glob: "**/config.*",
-			resolver: func(match string) config.Provider {
+			resolver: func(filesystem fs.FS, match string) config.Provider {
 				transformer := config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
 					for k := range m {
 						m[k] = k
@@ -106,48 +107,58 @@ func TestGlob(t *testing.T) {
 					return m, nil
 				})
 				transformers := []config.Transformer{transformer}
-				ext := filepath.Ext(match)
+				// Use a target just to get the file extension
+				target := cross.NewTest(platform.Linux, arch.AMD64)
+				ext := target.Path().Ext(match)
 				switch ext {
 				case ".json":
-					return config.NewJson(match, config.FileOption{Transformers: transformers})
+					return config.NewJson(filesystem, match, config.FileOption{Transformers: transformers})
 				case ".yaml", ".yml":
-					return config.NewYaml(match, config.FileOption{Transformers: transformers})
+					return config.NewYaml(filesystem, match, config.FileOption{Transformers: transformers})
 				case ".toml":
-					return config.NewToml(match, config.FileOption{Transformers: transformers})
+					return config.NewToml(filesystem, match, config.FileOption{Transformers: transformers})
 				}
 				return nil
 			},
 		},
-	}	
+	}
 	for _, test := range tests {
-
 		t.Run(test.name, func(t *testing.T) {
+			// Use Target for cross-platform abstractions
+			target := cross.NewTest(platform.Linux, arch.AMD64)
 
-			dir := t.TempDir()
+			// Create a memory-based filesystem using go-cross
+			filesystem := target.FS()
+			path := target.Path()
+
+			// Use a base directory in the memory filesystem
+			testDir := "/test"
+
+			// Set up the files using the memory filesystem
 			for _, file := range test.files {
+				fileName := path.Join(testDir, file.name)
+				fileDirectory := path.Dir(fileName)
 
-				fileName := filepath.Join(dir, file.name)
-				fileDirectory := filepath.Dir(fileName)
-
-				_, err := os.Stat(fileDirectory)
+				// Check if directory exists and create if needed using the memory filesystem
+				exists, err := filesystem.Exists(fileDirectory)
 				if err != nil {
-					if errors.Is(err, os.ErrNotExist) {
-						err = os.MkdirAll(fileDirectory, 0666)
-						if err != nil {
-							t.Fatal(err)
-						}
-					} else {
+					t.Fatal(err)
+				}
+				if !exists {
+					err := filesystem.MkdirAll(fileDirectory, 0666)
+					if err != nil {
 						t.Fatal(err)
 					}
 				}
 
-				err = os.WriteFile(fileName, []byte(file.content), 0666)
+				err = filesystem.WriteFile(fileName, []byte(file.content), 0666)
 				if err != nil {
 					t.Fatal(err)
 				}
 			}
 
-			provider := config.NewGlob(dir, test.glob, config.GlobOption{Resolver: test.resolver})
+			// Use the same memory filesystem for the provider
+			provider := config.NewGlob(filesystem, path, testDir, test.glob, config.GlobOption{Resolver: test.resolver})
 
 			ctx := &config.GetContext{}
 			actual, err := provider.Get(ctx)
@@ -157,6 +168,8 @@ func TestGlob(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(test.expected, actual) {
+				t.Logf("Expected: %+v", test.expected)
+				t.Logf("Actual: %+v", actual)
 				t.Fatal("expected objects to be equal")
 			}
 		})

@@ -2,14 +2,16 @@ package config
 
 import (
 	"encoding/json"
+
+	"github.com/patrickhuber/go-cross/fs"
 )
 
 type JsonOption struct {
 	Transformers []Transformer
 }
 
-func NewJson(file string, options ...FileOption) Provider {
-	return NewFile(file, NewJsonCodec(), options...)
+func NewJson(filesystem fs.FS, file string, options ...FileOption) Provider {
+	return NewFile(filesystem, file, NewJsonCodec(), options...)
 }
 
 type jsonCodec struct{}

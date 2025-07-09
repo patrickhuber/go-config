@@ -1,13 +1,13 @@
 package config_test
 
 import (
-	"errors"
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/patrickhuber/go-config"
+	"github.com/patrickhuber/go-cross"
+	"github.com/patrickhuber/go-cross/arch"
+	"github.com/patrickhuber/go-cross/platform"
 )
 
 func TestGlobUp(t *testing.T) {
@@ -74,28 +74,41 @@ func TestGlobUp(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			dir := t.TempDir()
+			// Use Target for cross-platform abstractions
+			target := cross.NewTest(platform.Linux, arch.AMD64)
+
+			// Create a memory-based filesystem using go-cross
+			filesystem := target.FS()
+			path := target.Path()
+
+			// Use a base directory in the memory filesystem
+			testDir := "/test"
+
+			// Set up the files using the memory filesystem
 			for _, file := range test.files {
-				fileName := filepath.Join(dir, file.name)
-				fileDirectory := filepath.Dir(fileName)
-				_, err := os.Stat(fileDirectory)
+				fileName := path.Join(testDir, file.name)
+				fileDirectory := path.Dir(fileName)
+
+				// Check if directory exists and create if needed using the memory filesystem
+				exists, err := filesystem.Exists(fileDirectory)
 				if err != nil {
-					if errors.Is(err, os.ErrNotExist) {
-						err = os.MkdirAll(fileDirectory, 0666)
-						if err != nil {
-							t.Fatal(err)
-						}
-					} else {
+					t.Fatal(err)
+				}
+				if !exists {
+					err := filesystem.MkdirAll(fileDirectory, 0666)
+					if err != nil {
 						t.Fatal(err)
 					}
 				}
-				err = os.WriteFile(fileName, []byte(file.content), 0666)
+
+				err = filesystem.WriteFile(fileName, []byte(file.content), 0666)
 				if err != nil {
 					t.Fatal(err)
 				}
 			}
-			workingDirectory := filepath.Join(dir, test.dir)
-			provider := config.NewGlobUp(workingDirectory, test.glob)
+
+			workingDirectory := path.Join(testDir, test.dir)
+			provider := config.NewGlobUp(filesystem, path, workingDirectory, test.glob)
 			ctx := &config.GetContext{}
 			actual, err := provider.Get(ctx)
 			if err != nil {

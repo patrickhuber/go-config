@@ -4,10 +4,11 @@ import (
 	"fmt"
 
 	"github.com/joho/godotenv"
+	"github.com/patrickhuber/go-cross/fs"
 )
 
-func NewDotEnv(file string, options ...FileOption) Provider {
-	return NewFile(file, &dotEnvCodec{}, options...)
+func NewDotEnv(filesystem fs.FS, file string, options ...FileOption) Provider {
+	return NewFile(filesystem, file, &dotEnvCodec{}, options...)
 }
 
 type dotEnvCodec struct{}

@@ -1,12 +1,13 @@
 package config_test
 
 import (
-	"os"
-	"path/filepath"
 	"reflect"
 	"testing"
 
 	"github.com/patrickhuber/go-config"
+	"github.com/patrickhuber/go-cross"
+	"github.com/patrickhuber/go-cross/arch"
+	"github.com/patrickhuber/go-cross/platform"
 )
 
 func TestDotEnv(t *testing.T) {
@@ -33,22 +34,37 @@ func TestDotEnv(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			dir := t.TempDir()
-			filePath := filepath.Join(dir, ".env."+test.name)
+			// Use Target for cross-platform abstractions
+			target := cross.NewTest(platform.Linux, arch.AMD64)
 
-			file, err := os.Create(filePath)
+			// Use the filesystem from the target
+			filesystem := target.FS()
+			path := target.Path()
+
+			// Use a base directory in the memory filesystem
+			testDir := "/test"
+			filePath := path.Join(testDir, ".env."+test.name)
+			fileDirectory := path.Dir(filePath)
+
+			// Ensure directory exists
+			exists, err := filesystem.Exists(fileDirectory)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer file.Close()
+			if !exists {
+				err := filesystem.MkdirAll(fileDirectory, 0666)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
 
-			_, err = file.WriteString(test.data)
+			err = filesystem.WriteFile(filePath, []byte(test.data), 0666)
 			if err != nil {
 				t.Fatal(err)
 			}
-			file.Close()
+
 			ctx := &config.GetContext{}
-			actual, err := config.NewDotEnv(filePath).Get(ctx)
+			actual, err := config.NewDotEnv(filesystem, filePath).Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

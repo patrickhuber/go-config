@@ -1,9 +1,13 @@
 package config
 
-import "gopkg.in/yaml.v3"
+import (
+	"gopkg.in/yaml.v3"
 
-func NewYaml(file string, options ...FileOption) Provider {
-	return NewFile(file, NewYamlCodec(), options...)
+	"github.com/patrickhuber/go-cross/fs"
+)
+
+func NewYaml(filesystem fs.FS, file string, options ...FileOption) Provider {
+	return NewFile(filesystem, file, NewYamlCodec(), options...)
 }
 
 type yamlCodec struct{}
