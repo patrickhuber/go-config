@@ -1,13 +1,13 @@
 package config_test
 
 import (
-	"os"
 	"reflect"
 	"testing"
 
 	"maps"
 
 	"github.com/patrickhuber/go-config"
+	"github.com/patrickhuber/go-cross/env"
 )
 
 func TestEnv(t *testing.T) {
@@ -47,14 +47,10 @@ func TestEnv(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			os.Clearenv()
-			for k, v := range test.env {
-				err := os.Setenv(k, v)
-				if err != nil {
-					t.Fatal(err)
-				}
-			}
-			p := config.NewEnv(config.EnvOption{
+			// Create a memory environment with the test data
+			testEnv := env.NewMemoryWithMap(test.env)
+
+			p := config.NewEnv(testEnv, config.EnvOption{
 				Transformers: test.transforms,
 				Prefix:       test.prefix})
 			ctx := &config.GetContext{}

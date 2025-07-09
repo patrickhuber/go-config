@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/patrickhuber/go-config"
+	"github.com/patrickhuber/go-cross/env"
 )
 
 func TestDynamic(t *testing.T) {
@@ -18,7 +19,8 @@ func TestDynamic(t *testing.T) {
 		t.Fatal(err)
 	}
 	os.Setenv(key, filePath)
-	envProvider := config.NewEnv(config.EnvOption{Prefix: key})
+	osEnv := env.New()
+	envProvider := config.NewEnv(osEnv, config.EnvOption{Prefix: key})
 	dynamicProvider := config.NewDynamic(func(ctx *config.GetContext) (config.Provider, error) {
 		m, ok := ctx.MergedConfiguration.(map[string]any)
 		if !ok {

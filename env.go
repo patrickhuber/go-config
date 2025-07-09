@@ -1,12 +1,14 @@
 package config
 
 import (
-	"os"
 	"strings"
+
+	"github.com/patrickhuber/go-cross/env"
 )
 
 type EnvProvider struct {
 	options []EnvOption
+	env     env.Environment
 }
 
 type EnvOption struct {
@@ -14,10 +16,13 @@ type EnvOption struct {
 	Transformers []Transformer
 }
 
-func NewEnv(options ...EnvOption) *EnvProvider {
-	return &EnvProvider{
+func NewEnv(environment env.Environment, options ...EnvOption) *EnvProvider {
+	provider := &EnvProvider{
 		options: options,
+		env:     environment,
 	}
+
+	return provider
 }
 
 func (p *EnvProvider) Get(ctx *GetContext) (any, error) {
@@ -33,13 +38,8 @@ func (p *EnvProvider) Get(ctx *GetContext) (any, error) {
 	cfg := map[string]any{}
 
 	// load environment variables
-	for _, env := range os.Environ() {
-		splits := strings.Split(env, "=")
-		if len(splits) < 2 {
-			continue
-		}
-		key := splits[0]
-		value := splits[1]
+	envVars := p.env.Export()
+	for key, value := range envVars {
 		if prefixSpecified && !strings.HasPrefix(key, prefix) {
 			continue
 		}
