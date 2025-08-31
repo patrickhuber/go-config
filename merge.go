@@ -35,8 +35,31 @@ func mergeMap(fromMap map[string]any, to any) (any, error) {
 	// clone the from map to avoid mutating
 	m := maps.Clone(fromMap)
 
-	// overwrite keys from fromMap with keys from toMap
-	maps.Copy(m, toMap)
+	// merge keys in the from map with keys in the to map
+	for k, vFrom := range m {
+		// if the key exists in both maps, merge the values
+		if vTo, ok := toMap[k]; ok {
+			var err error
+			vFrom, err = Merge(vFrom, vTo)
+			if err != nil {
+				return nil, err
+			}
+		}
+		// if the key does not exist in the toMap, copy the value from the fromMap
+		m[k] = vFrom
+	}
+
+	// go in the reverse direction
+	for k, vTo := range toMap {
+		if vFrom, ok := m[k]; ok {
+			var err error
+			vTo, err = Merge(vTo, vFrom)
+			if err != nil {
+				return nil, err
+			}
+		}
+		m[k] = vTo
+	}
 
 	return m, nil
 }
