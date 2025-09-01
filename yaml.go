@@ -6,7 +6,7 @@ import (
 	"github.com/patrickhuber/go-cross/fs"
 )
 
-func NewYaml(filesystem fs.FS, file string, options ...FileOption) Provider {
+func NewYaml(filesystem fs.FS, file string, options ...FileOption) Factory {
 	return NewFile(filesystem, file, NewYamlCodec(), options...)
 }
 

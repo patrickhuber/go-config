@@ -2,7 +2,7 @@ package config
 
 type Root interface {
 	Provider
-	Providers() []Provider
+	Providers() ([]Provider, error)
 }
 
 type root struct {
@@ -15,13 +15,17 @@ func NewRoot(providers ...Provider) Root {
 	}
 }
 
-func (r *root) Providers() []Provider {
-	return r.providers
+func (r *root) Providers() ([]Provider, error) {
+	return r.providers, nil
 }
 
 func (r *root) Get(ctx *GetContext) (any, error) {
 	current := ctx.MergedConfiguration
-	for _, provider := range r.providers {
+	providers, err := r.Providers()
+	if err != nil {
+		return nil, err
+	}
+	for _, provider := range providers {
 		currentCtx := &GetContext{
 			MergedConfiguration: current,
 		}

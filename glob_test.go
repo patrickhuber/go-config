@@ -7,7 +7,6 @@ import (
 	"github.com/patrickhuber/go-config"
 	"github.com/patrickhuber/go-cross"
 	"github.com/patrickhuber/go-cross/arch"
-	"github.com/patrickhuber/go-cross/fs"
 	"github.com/patrickhuber/go-cross/platform"
 )
 
@@ -21,7 +20,6 @@ func TestGlob(t *testing.T) {
 		files    []testFile
 		expected map[string]any
 		glob     string
-		resolver config.GlobProviderResolver
 	}
 	tests := []test{
 		{
@@ -50,8 +48,7 @@ func TestGlob(t *testing.T) {
 				"toml":   "test",
 				"dotenv": "test",
 			},
-			glob:     "**/config.*",
-			resolver: nil,
+			glob: "**/config.*",
 		},
 		{
 			name: "level",
@@ -74,23 +71,22 @@ func TestGlob(t *testing.T) {
 				"json": "test",
 				"toml": "test",
 			},
-			glob:     "**/config.*",
-			resolver: nil,
+			glob: "**/config.*",
 		},
 		{
 			name: "level_resolver",
 			files: []testFile{
 				{
 					name:    "./config.yml",
-					content: "yaml: test",
+					content: "yaml: yaml",
 				},
 				{
 					name:    "./child/config.json",
-					content: `{"json": "test"}`,
+					content: `{"json": "json"}`,
 				},
 				{
 					name:    "./child/grand/config.toml",
-					content: `toml="test"`,
+					content: `toml="toml"`,
 				},
 			},
 			expected: map[string]any{
@@ -99,27 +95,6 @@ func TestGlob(t *testing.T) {
 				"toml": "toml",
 			},
 			glob: "**/config.*",
-			resolver: func(filesystem fs.FS, match string) config.Provider {
-				transformer := config.FuncTypedTransformer(func(m map[string]any) (map[string]any, error) {
-					for k := range m {
-						m[k] = k
-					}
-					return m, nil
-				})
-				transformers := []config.Transformer{transformer}
-				// Use a target just to get the file extension
-				target := cross.NewTest(platform.Linux, arch.AMD64)
-				ext := target.Path().Ext(match)
-				switch ext {
-				case ".json":
-					return config.NewJson(filesystem, match, config.FileOption{Transformers: transformers})
-				case ".yaml", ".yml":
-					return config.NewYaml(filesystem, match, config.FileOption{Transformers: transformers})
-				case ".toml":
-					return config.NewToml(filesystem, match, config.FileOption{Transformers: transformers})
-				}
-				return nil
-			},
 		},
 	}
 	for _, test := range tests {
@@ -158,15 +133,20 @@ func TestGlob(t *testing.T) {
 			}
 
 			// Use the same memory filesystem for the provider
-			provider := config.NewGlob(filesystem, path, testDir, test.glob, config.GlobOption{Resolver: test.resolver})
+			resolver := config.DefaultGlobResolver(filesystem, path)
+			factory := config.NewGlob(filesystem, path, resolver, testDir, test.glob)
 
 			ctx := &config.GetContext{}
-			actual, err := provider.Get(ctx)
-
+			builder := config.NewBuilder(factory)
+			root, err := builder.Build()
 			if err != nil {
 				t.Fatal(err)
 			}
 
+			actual, err := root.Get(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
 			if !reflect.DeepEqual(test.expected, actual) {
 				t.Logf("Expected: %+v", test.expected)
 				t.Logf("Actual: %+v", actual)

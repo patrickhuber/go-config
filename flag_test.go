@@ -45,9 +45,16 @@ func TestFlag(t *testing.T) {
 			if test.transform != nil {
 				options = append(options, config.FlagOption{Transformers: []config.Transformer{test.transform}})
 			}
-			p := config.NewFlag(test.flags, test.args, options...)
+			factory := config.NewFlag(test.flags, test.args, options...)
 			ctx := &config.GetContext{}
-			cfg, err := p.Get(ctx)
+
+			builder := config.NewBuilder(factory)
+			root, err := builder.Build()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			cfg, err := root.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

@@ -66,13 +66,22 @@ func TestJson(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			p := config.NewJson(filesystem, testFilePath, config.FileOption{Transformers: test.transformers})
+			factory := config.NewJson(filesystem, testFilePath, config.FileOption{Transformers: test.transformers})
 			ctx := &config.GetContext{}
-			actual, err := p.Get(ctx)
+
+			builder := config.NewBuilder(factory)
+			root, err := builder.Build()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			actual, err := root.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(test.expected, actual) {
+				t.Logf("Expected: %+v", test.expected)
+				t.Logf("Actual: %+v", actual)
 				t.Fatal("expected objects to be equal")
 			}
 		})

@@ -6,7 +6,7 @@ import (
 	"github.com/patrickhuber/go-cross/fs"
 )
 
-func NewToml(filesystem fs.FS, file string, options ...FileOption) Provider {
+func NewToml(filesystem fs.FS, file string, options ...FileOption) Factory {
 	return NewFile(filesystem, file, NewTomlCodec(), options...)
 }
 

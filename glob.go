@@ -7,15 +7,43 @@ import (
 
 	"github.com/patrickhuber/go-cross/filepath"
 	"github.com/patrickhuber/go-cross/fs"
-	"github.com/patrickhuber/go-cross/os"
 )
 
-// GlobProviderResolver returns the Provider for the given glob match
-type GlobProviderResolver func(filesystem fs.FS, match string) Provider
+// GlobResolver returns the Provider for the given glob match
+type GlobResolver interface {
+	Resolve(match string) Factory
+}
+
+func DefaultGlobResolver(fileSystem fs.FS, path filepath.Provider) GlobResolver {
+	return &defaultGlobResolver{
+		fs:   fileSystem,
+		path: path,
+	}
+}
+
+type defaultGlobResolver struct {
+	fs   fs.FS
+	path filepath.Provider
+}
+
+func (r *defaultGlobResolver) Resolve(match string) Factory {
+	var factory Factory
+	ext := r.path.Ext(match)
+	switch ext {
+	case ".json":
+		factory = NewJson(r.fs, match)
+	case ".yml", ".yaml":
+		factory = NewYaml(r.fs, match)
+	case ".toml":
+		factory = NewToml(r.fs, match)
+	case ".env":
+		factory = NewDotEnv(r.fs, match)
+	}
+	return factory
+}
 
 type GlobOption struct {
 	Transformers []Transformer
-	Resolver     GlobProviderResolver
 }
 
 type globDirection string
@@ -23,42 +51,70 @@ type globDirection string
 const globDirectionUp globDirection = "up"
 const globDirectionDown globDirection = "down"
 
-type globProvider struct {
+type globProviderFactory struct {
 	pattern    string
 	directory  string
 	direction  globDirection
 	filesystem fs.FS
 	filepath   filepath.Provider
-	options    GlobOption
+	resolver   GlobResolver
+	options    []GlobOption
 }
 
-func NewGlob(filesystem fs.FS, filePath filepath.Provider, directory string, pattern string, options ...GlobOption) Provider {
-	return newGlobWithDirection(filesystem, filePath, directory, pattern, globDirectionDown, options...)
+func NewGlob(
+	filesystem fs.FS,
+	filePath filepath.Provider,
+	resolver GlobResolver,
+	directory string,
+	pattern string,
+	options ...GlobOption) Factory {
+	return newGlobProviderFactoryWithDirection(
+		filesystem,
+		filePath,
+		resolver,
+		globDirectionDown,
+		directory,
+		pattern,
+		options...)
 }
 
-func NewGlobUp(filesystem fs.FS, filePath filepath.Provider, directory string, pattern string, options ...GlobOption) Provider {
-	return newGlobWithDirection(filesystem, filePath, directory, pattern, globDirectionUp, options...)
+func NewGlobUp(
+	filesystem fs.FS,
+	filePath filepath.Provider,
+	resolver GlobResolver,
+	directory string,
+	pattern string,
+	options ...GlobOption) Factory {
+	return newGlobProviderFactoryWithDirection(
+		filesystem,
+		filePath,
+		resolver,
+		globDirectionUp,
+		directory,
+		pattern,
+		options...)
 }
 
-func newGlobWithDirection(filesystem fs.FS, filePath filepath.Provider, directory string, pattern string, direction globDirection, options ...GlobOption) Provider {
-	provider := &globProvider{
-		direction:  direction,
+func newGlobProviderFactoryWithDirection(
+	filesystem fs.FS,
+	filePath filepath.Provider,
+	resolver GlobResolver,
+	direction globDirection,
+	directory string,
+	pattern string,
+	options ...GlobOption) Factory {
+	return &globProviderFactory{
 		pattern:    pattern,
 		directory:  directory,
+		direction:  direction,
 		filesystem: filesystem,
 		filepath:   filePath,
+		resolver:   resolver,
+		options:    options,
 	}
-	for _, option := range options {
-		provider.options.Transformers = append(provider.options.Transformers, option.Transformers...)
-		provider.options.Resolver = option.Resolver
-	}
-	if provider.options.Resolver == nil {
-		provider.options.Resolver = defaultGlobProviderResolver
-	}
-	return provider
 }
 
-func (g *globProvider) Get(ctx *GetContext) (any, error) {
+func (g *globProviderFactory) Providers() ([]Provider, error) {
 	var matches []string
 	var err error
 	switch g.direction {
@@ -74,38 +130,17 @@ func (g *globProvider) Get(ctx *GetContext) (any, error) {
 	}
 	var providers []Provider
 	for _, match := range matches {
-		provider := g.options.Resolver(g.filesystem, match)
-		if provider == nil {
+		factory := g.resolver.Resolve(match)
+		if factory == nil {
 			continue
 		}
-		providers = append(providers, provider)
+		childProviders, err := factory.Providers()
+		if err != nil {
+			return nil, err
+		}
+		providers = append(providers, childProviders...)
 	}
-	root := NewRoot(providers...)
-
-	data, err := root.Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return transform(data, g.options.Transformers)
-}
-
-func defaultGlobProviderResolver(filesystem fs.FS, match string) Provider {
-	// Create a filepath provider for this operation
-	osProvider := os.New()
-	fpProvider := filepath.NewProviderFromOS(osProvider)
-	ext := fpProvider.Ext(match)
-	var provider Provider
-	switch ext {
-	case ".json":
-		provider = NewJson(filesystem, match)
-	case ".yml", ".yaml":
-		provider = NewYaml(filesystem, match)
-	case ".toml":
-		provider = NewToml(filesystem, match)
-	case ".env":
-		provider = NewDotEnv(filesystem, match)
-	}
-	return provider
+	return providers, nil
 }
 
 func glob(filesystem fs.FS, fp filepath.Provider, dir string, pattern string) ([]string, error) {

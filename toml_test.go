@@ -60,9 +60,16 @@ func TestToml(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			p := config.NewToml(filesystem, testFilePath, config.FileOption{Transformers: test.transformers})
+			f := config.NewToml(filesystem, testFilePath, config.FileOption{Transformers: test.transformers})
+
+			builder := config.NewBuilder(f)
+			root, err := builder.Build()
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			ctx := &config.GetContext{}
-			actual, err := p.Get(ctx)
+			actual, err := root.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

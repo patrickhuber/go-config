@@ -16,13 +16,13 @@ type EnvOption struct {
 	Transformers []Transformer
 }
 
-func NewEnv(environment env.Environment, options ...EnvOption) *EnvProvider {
+func NewEnv(environment env.Environment, options ...EnvOption) Factory {
 	provider := &EnvProvider{
 		options: options,
 		env:     environment,
 	}
 
-	return provider
+	return NewFactory(provider)
 }
 
 func (p *EnvProvider) Get(ctx *GetContext) (any, error) {

@@ -61,12 +61,14 @@ type FlagOption struct {
 	Transformers []Transformer
 }
 
-func NewFlag(flags []Flag, args []string, options ...FlagOption) Provider {
-	return &flagProvider{
-		flags:   flags,
-		args:    args,
-		options: options,
-	}
+func NewFlag(flags []Flag, args []string, options ...FlagOption) Factory {
+	return NewFactory(
+		&flagProvider{
+			flags:   flags,
+			args:    args,
+			options: options,
+		},
+	)
 }
 
 func (p *flagProvider) Get(ctx *GetContext) (any, error) {

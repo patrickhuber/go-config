@@ -66,13 +66,22 @@ func TestYaml(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			p := config.NewYaml(filesystem, testFilePath, config.FileOption{Transformers: test.transformers})
+			f := config.NewYaml(filesystem, testFilePath, config.FileOption{Transformers: test.transformers})
+
+			builder := config.NewBuilder(f)
+			root, err := builder.Build()
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			ctx := &config.GetContext{}
-			actual, err := p.Get(ctx)
+			actual, err := root.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(test.expected, actual) {
+				t.Logf("Expected: %+v", test.expected)
+				t.Logf("Actual: %+v", actual)
 				t.Fatal("expected objects to be equal")
 			}
 		})

@@ -7,7 +7,7 @@ import (
 	"github.com/patrickhuber/go-cross/fs"
 )
 
-func NewDotEnv(filesystem fs.FS, file string, options ...FileOption) Provider {
+func NewDotEnv(filesystem fs.FS, file string, options ...FileOption) Factory {
 	return NewFile(filesystem, file, &dotEnvCodec{}, options...)
 }
 

@@ -5,6 +5,15 @@ import (
 )
 
 func Merge(from any, to any) (any, error) {
+	if from == nil && to == nil {
+		return nil, nil
+	}
+	if from == nil {
+		return to, nil
+	}
+	if to == nil {
+		return from, nil
+	}
 	switch concrete := from.(type) {
 	case []any:
 		return to, nil
@@ -24,6 +33,11 @@ func mergeMap(fromMap map[string]any, to any) (any, error) {
 	// if to is nil, return fromMap cloned
 	if to == nil {
 		return maps.Clone(fromMap), nil
+	}
+
+	// if from is nil, return toMap cloned
+	if fromMap == nil {
+		return to, nil
 	}
 
 	// check if to is a map, if not return to

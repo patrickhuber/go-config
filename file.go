@@ -18,14 +18,14 @@ type FileOption struct {
 	BeforeGet    FileBeforeGet
 }
 
-func NewFile(filesystem fs.FS, file string, codec Codec, options ...FileOption) Provider {
+func NewFile(filesystem fs.FS, file string, codec Codec, options ...FileOption) Factory {
 	provider := &fileProvider{
 		file:    file,
 		codec:   codec,
 		fs:      filesystem,
 		options: options,
 	}
-	return provider
+	return NewFactory(provider)
 }
 
 func (provider *fileProvider) Get(ctx *GetContext) (any, error) {

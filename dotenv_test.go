@@ -64,7 +64,15 @@ func TestDotEnv(t *testing.T) {
 			}
 
 			ctx := &config.GetContext{}
-			actual, err := config.NewDotEnv(filesystem, filePath).Get(ctx)
+			providers, err := config.NewDotEnv(filesystem, filePath).Providers()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(providers) != 1 {
+				t.Fatal("expected exactly one provider")
+			}
+			provider := providers[0]
+			actual, err := provider.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

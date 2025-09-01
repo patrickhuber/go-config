@@ -10,7 +10,7 @@ type JsonOption struct {
 	Transformers []Transformer
 }
 
-func NewJson(filesystem fs.FS, file string, options ...FileOption) Provider {
+func NewJson(filesystem fs.FS, file string, options ...FileOption) Factory {
 	return NewFile(filesystem, file, NewJsonCodec(), options...)
 }
 

@@ -63,7 +63,12 @@ func main(){
             },
         }, args),
     )
-    root := builder.Build()
+    
+    root, err := builder.Build()
+    if err != nil{
+        log.Fatal(err)
+    }
+
     cfg, err := root.Get(&config.GetContext{})
     if err != nil {
         log.Fatal(err)

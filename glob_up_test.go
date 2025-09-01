@@ -108,13 +108,22 @@ func TestGlobUp(t *testing.T) {
 			}
 
 			workingDirectory := path.Join(testDir, test.dir)
-			provider := config.NewGlobUp(filesystem, path, workingDirectory, test.glob)
+			resolver := config.DefaultGlobResolver(filesystem, path)
+			factory := config.NewGlobUp(filesystem, path, resolver, workingDirectory, test.glob)
+			builder := config.NewBuilder(factory)
+			root, err := builder.Build()
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			ctx := &config.GetContext{}
-			actual, err := provider.Get(ctx)
+			actual, err := root.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(test.expected, actual) {
+				t.Logf("Expected: %+v", test.expected)
+				t.Logf("Actual: %+v", actual)
 				t.Fatal("expected objects to be equal")
 			}
 		})

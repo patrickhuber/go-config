@@ -50,11 +50,18 @@ func TestEnv(t *testing.T) {
 			// Create a memory environment with the test data
 			testEnv := env.NewMemoryWithMap(test.env)
 
-			p := config.NewEnv(testEnv, config.EnvOption{
+			factory := config.NewEnv(testEnv, config.EnvOption{
 				Transformers: test.transforms,
 				Prefix:       test.prefix})
+
+			builder := config.NewBuilder(factory)
+			root, err := builder.Build()
+			if err != nil {
+				t.Fatal(err)
+			}
+
 			ctx := &config.GetContext{}
-			actual, err := p.Get(ctx)
+			actual, err := root.Get(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}

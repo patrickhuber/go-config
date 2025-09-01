@@ -43,9 +43,13 @@ func TestBuilder(t *testing.T) {
 				Data: test.initial,
 			}}
 			providers = append(providers, test.additionalProviders...)
-			builder := config.NewBuilder(providers...)
+			factory := config.NewFactory(providers...)
+			builder := config.NewBuilder(factory)
 
-			root := builder.Build()
+			root, err := builder.Build()
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			actual, err := root.Get(&config.GetContext{})
 			if err != nil {
