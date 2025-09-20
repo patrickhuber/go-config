@@ -72,6 +72,18 @@ func TestMerge(t *testing.T) {
 				"hello": map[string]any{"world": map[string]any{"from": "here"}},
 			},
 		},
+		{
+
+			name: "nested_existing",
+			from: map[string]any{
+				"hello": map[string]any{"world": map[string]any{"go": "home"}}},
+			to: map[string]any{
+				"hello": map[string]any{"world": map[string]any{"from": "here"}},
+			},
+			expected: map[string]any{
+				"hello": map[string]any{"world": map[string]any{"from": "here", "go": "home"}},
+			},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
