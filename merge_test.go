@@ -73,7 +73,6 @@ func TestMerge(t *testing.T) {
 			},
 		},
 		{
-
 			name: "nested_existing",
 			from: map[string]any{
 				"hello": map[string]any{"world": map[string]any{"go": "home"}}},
