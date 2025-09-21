@@ -35,7 +35,7 @@ func mergeMap(fromMap map[string]any, to any) (any, error) {
 		return maps.Clone(fromMap), nil
 	}
 
-	// if from is nil, return toMap cloned
+	// if from is nil, return to
 	if fromMap == nil {
 		return to, nil
 	}
@@ -46,34 +46,53 @@ func mergeMap(fromMap map[string]any, to any) (any, error) {
 		return to, nil
 	}
 
-	// clone the from map to avoid mutating
-	m := maps.Clone(fromMap)
+	// deepCopy the toMap as it is the target
+	merged := make(map[string]any, len(toMap))
+	for keyTo, valueTo := range toMap {
+		merged[keyTo] = deepCopy(valueTo)
+	}
 
 	// merge keys in the from map with keys in the to map
-	for k, vFrom := range m {
+	for keyFrom, valueFrom := range fromMap {
 		// if the key exists in both maps, merge the values
-		if vTo, ok := toMap[k]; ok {
+		if vTo, ok := merged[keyFrom]; ok {
 			var err error
-			vFrom, err = Merge(vFrom, vTo)
+			valueFrom, err = Merge(valueFrom, vTo)
 			if err != nil {
 				return nil, err
 			}
 		}
 		// if the key does not exist in the toMap, copy the value from the fromMap
-		m[k] = vFrom
+		merged[keyFrom] = valueFrom
 	}
 
-	// go in the reverse direction
-	for k, vTo := range toMap {
-		if vFrom, ok := m[k]; ok {
-			var err error
-			vTo, err = Merge(vTo, vFrom)
-			if err != nil {
-				return nil, err
-			}
+	return merged, nil
+}
+
+func deepCopy(value any) any {
+	if value == nil {
+		return nil
+	}
+	switch concrete := value.(type) {
+	case []any:
+		sliceClone := make([]any, len(concrete))
+		for i, v := range concrete {
+			sliceClone[i] = deepCopy(v)
 		}
-		m[k] = vTo
+		return sliceClone
+	case map[string]any:
+		mapClone := make(map[string]any, len(concrete))
+		for k, v := range concrete {
+			mapClone[k] = deepCopy(v)
+		}
+		return mapClone
+	case string:
+		return concrete
+	case float64:
+		return concrete
+	case bool:
+		return concrete
+	default:
+		return concrete
 	}
-
-	return m, nil
 }
