@@ -16,7 +16,7 @@ func Merge(from any, to any) (any, error) {
 	}
 	switch concrete := from.(type) {
 	case []any:
-		return to, nil
+		return mergeSlice(concrete, to)
 	case map[string]any:
 		return mergeMap(concrete, to)
 	case string:
@@ -66,6 +66,21 @@ func mergeMap(fromMap map[string]any, to any) (any, error) {
 		merged[keyFrom] = valueFrom
 	}
 
+	return merged, nil
+}
+
+func mergeSlice(from []any, to any) (any, error) {
+	// if to is nil, return from cloned
+	if to == nil {
+		return deepCopy(from), nil
+	}
+	toSlice, ok := to.([]any)
+	if !ok {
+		return to, nil
+	}
+	merged := make([]any, 0, len(from)+len(toSlice))
+	merged = append(merged, deepCopy(from).([]any)...)
+	merged = append(merged, toSlice...)
 	return merged, nil
 }
 

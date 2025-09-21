@@ -48,7 +48,20 @@ func TestMerge(t *testing.T) {
 			name:     "slice",
 			from:     []any{4.0, 5.0, 6.0},
 			to:       []any{1.0, 2.0, 3.0},
-			expected: []any{1.0, 2.0, 3.0},
+			expected: []any{4.0, 5.0, 6.0, 1.0, 2.0, 3.0},
+		},
+		{
+			name: "complex_object_slice",
+			from: []any{
+				map[string]any{"hello": "world"},
+			},
+			to: []any{
+				map[string]any{"foo": "bar"},
+			},
+			expected: []any{
+				map[string]any{"hello": "world"},
+				map[string]any{"foo": "bar"},
+			},
 		},
 		{
 			name: "nested",
