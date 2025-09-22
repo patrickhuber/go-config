@@ -96,6 +96,18 @@ func TestMerge(t *testing.T) {
 				"hello": map[string]any{"world": map[string]any{"from": "here", "go": "home"}},
 			},
 		},
+		{
+			name:     "nil_from",
+			from:     nil,
+			to:       map[string]any{"hello": "world"},
+			expected: map[string]any{"hello": "world"},
+		},
+		{
+			name:     "nil_to",
+			from:     map[string]any{"hello": "world"},
+			to:       nil,
+			expected: map[string]any{"hello": "world"},
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
