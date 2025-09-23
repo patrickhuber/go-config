@@ -1,9 +1,15 @@
 package config
 
 import (
-	"maps"
+	"reflect"
 )
 
+// Merge merges 'from' into 'to' returning a new value without mutating inputs.
+// Semantics (retains original intention):
+// - Primitive / non-composite conflicts: keep 'to' value
+// - Map conflicts: recursively merge; on leaf conflict keep 'to'
+// - Slice/array conflicts: concatenate (from... + to...) if same concrete type
+// - Nil handling: if one side is nil, return the other (deep copied for composites)
 func Merge(from any, to any) (any, error) {
 	if from == nil && to == nil {
 		return nil, nil
@@ -12,102 +18,134 @@ func Merge(from any, to any) (any, error) {
 		return to, nil
 	}
 	if to == nil {
-		return from, nil
+		return deepCopy(from), nil
 	}
-	switch concrete := from.(type) {
-	case []any:
-		return mergeSlice(concrete, to)
-	case map[string]any:
-		return mergeMap(concrete, to)
-	case string:
-		return to, nil
-	case float64:
-		return to, nil
-	case bool:
+
+	vFrom := reflect.ValueOf(from)
+	vTo := reflect.ValueOf(to)
+
+	switch vFrom.Kind() {
+	case reflect.Map:
+		return mergeMapReflect(vFrom, vTo)
+	case reflect.Slice, reflect.Array:
+		return mergeSliceReflect(vFrom, vTo)
+	default:
+		// primitives / structs / others -> keep 'to'
 		return to, nil
 	}
-	return from, nil
 }
 
-func mergeMap(fromMap map[string]any, to any) (any, error) {
-	// if to is nil, return fromMap cloned
-	if to == nil {
-		return maps.Clone(fromMap), nil
+func mergeMapReflect(vFrom reflect.Value, vTo reflect.Value) (any, error) {
+	if !vTo.IsValid() || (vTo.Kind() == reflect.Interface && vTo.IsNil()) {
+		return deepCopyValue(vFrom).Interface(), nil
+	}
+	if vTo.Kind() != reflect.Map {
+		return vTo.Interface(), nil
+	}
+	if vFrom.Type() != vTo.Type() {
+		return vTo.Interface(), nil
 	}
 
-	// if from is nil, return to
-	if fromMap == nil {
-		return to, nil
+	result := reflect.MakeMapWithSize(vTo.Type(), vTo.Len())
+	for _, key := range vTo.MapKeys() {
+		result.SetMapIndex(key, deepCopyValue(vTo.MapIndex(key)))
 	}
-
-	// check if to is a map, if not return to
-	toMap, ok := to.(map[string]any)
-	if !ok {
-		return to, nil
-	}
-
-	// deepCopy the toMap as it is the target
-	merged := make(map[string]any, len(toMap))
-	for keyTo, valueTo := range toMap {
-		merged[keyTo] = deepCopy(valueTo)
-	}
-
-	// merge keys in the from map with keys in the to map
-	for keyFrom, valueFrom := range fromMap {
-		// if the key exists in both maps, merge the values
-		if vTo, ok := merged[keyFrom]; ok {
-			var err error
-			valueFrom, err = Merge(valueFrom, vTo)
+	for _, key := range vFrom.MapKeys() {
+		fVal := vFrom.MapIndex(key)
+		if existing := result.MapIndex(key); existing.IsValid() {
+			merged, err := Merge(fVal.Interface(), existing.Interface())
 			if err != nil {
 				return nil, err
 			}
+			result.SetMapIndex(key, reflect.ValueOf(merged))
+		} else {
+			result.SetMapIndex(key, deepCopyValue(fVal))
 		}
-		// if the key does not exist in the toMap, copy the value from the fromMap
-		merged[keyFrom] = valueFrom
 	}
-
-	return merged, nil
+	return result.Interface(), nil
 }
 
-func mergeSlice(from []any, to any) (any, error) {
-	// if to is nil, return from cloned
-	if to == nil {
-		return deepCopy(from), nil
+func mergeSliceReflect(vFrom reflect.Value, vTo reflect.Value) (any, error) {
+	if !vTo.IsValid() || (vTo.Kind() == reflect.Interface && vTo.IsNil()) {
+		return deepCopyValue(vFrom).Interface(), nil
 	}
-	toSlice, ok := to.([]any)
-	if !ok {
-		return to, nil
+	if !(vTo.Kind() == reflect.Slice || vTo.Kind() == reflect.Array) {
+		return vTo.Interface(), nil
 	}
-	merged := make([]any, 0, len(from)+len(toSlice))
-	merged = append(merged, deepCopy(from).([]any)...)
-	merged = append(merged, toSlice...)
-	return merged, nil
+	if vFrom.Type() != vTo.Type() {
+		return vTo.Interface(), nil
+	}
+	total := vFrom.Len() + vTo.Len()
+	out := reflect.MakeSlice(vTo.Type(), 0, total)
+	for i := 0; i < vFrom.Len(); i++ {
+		out = reflect.Append(out, deepCopyValue(vFrom.Index(i)))
+	}
+	for i := 0; i < vTo.Len(); i++ {
+		out = reflect.Append(out, vTo.Index(i))
+	}
+	return out.Interface(), nil
 }
 
 func deepCopy(value any) any {
 	if value == nil {
 		return nil
 	}
-	switch concrete := value.(type) {
-	case []any:
-		sliceClone := make([]any, len(concrete))
-		for i, v := range concrete {
-			sliceClone[i] = deepCopy(v)
+	return deepCopyValue(reflect.ValueOf(value)).Interface()
+}
+
+func deepCopyValue(v reflect.Value) reflect.Value {
+	if !v.IsValid() {
+		return v
+	}
+	if v.Kind() == reflect.Interface && !v.IsNil() {
+		elem := v.Elem()
+		copied := deepCopyValue(elem)
+		if copied.Type() != elem.Type() {
+			return copied.Convert(elem.Type())
 		}
-		return sliceClone
-	case map[string]any:
-		mapClone := make(map[string]any, len(concrete))
-		for k, v := range concrete {
-			mapClone[k] = deepCopy(v)
+		return copied
+	}
+	switch v.Kind() {
+	case reflect.Slice:
+		if v.IsNil() {
+			return v
 		}
-		return mapClone
-	case string:
-		return concrete
-	case float64:
-		return concrete
-	case bool:
-		return concrete
+		out := reflect.MakeSlice(v.Type(), v.Len(), v.Len())
+		for i := 0; i < v.Len(); i++ {
+			out.Index(i).Set(deepCopyValue(v.Index(i)))
+		}
+		return out
+	case reflect.Array:
+		out := reflect.New(v.Type()).Elem()
+		for i := 0; i < v.Len(); i++ {
+			out.Index(i).Set(deepCopyValue(v.Index(i)))
+		}
+		return out
+	case reflect.Map:
+		if v.IsNil() {
+			return v
+		}
+		out := reflect.MakeMapWithSize(v.Type(), v.Len())
+		for _, key := range v.MapKeys() {
+			out.SetMapIndex(key, deepCopyValue(v.MapIndex(key)))
+		}
+		return out
+	case reflect.Ptr:
+		if v.IsNil() {
+			return v
+		}
+		out := reflect.New(v.Elem().Type())
+		out.Elem().Set(deepCopyValue(v.Elem()))
+		return out
+	case reflect.Struct:
+		out := reflect.New(v.Type()).Elem()
+		for i := 0; i < v.NumField(); i++ {
+			if out.Field(i).CanSet() {
+				out.Field(i).Set(deepCopyValue(v.Field(i)))
+			}
+		}
+		return out
 	default:
-		return concrete
+		return v
 	}
 }
